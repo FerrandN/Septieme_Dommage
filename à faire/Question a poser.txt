@@ -1,0 +1,22 @@
+1)
+Est-ce qu'une personne peu se désinscrire des tournois ?
+Si oui est-elle remboursé?
+Si oui comment ?
+
+2)
+Peut-on creer le tournoi sur challonge et rapatrier les
+infos sur le site, plutôt que de recreer le tournoi
+dans le calendrier?
+
+3)
+Est-ce qu'on part sur le site ou le bot en 1er ?
+
+4) Log du compte challonge de 7D
+
+
+
+https://www.ionos.fr/digitalguide/serveur/know-how/creer-un-bot-discord/#:~:text=Cliquez%20sur%20«%20Discord%20API%20».,sous%20«%20Ajouter%20un%20Bot%20».
+https://learn.microsoft.com/fr-fr/aspnet/web-api/overview/advanced/calling-a-web-api-from-a-net-client
+https://developer.paypal.com/docs/multiparty/subscriptions/customize/one-time-fee/
+https://api.challonge.com/fr/v1.html
+https://stackoverflow.com/questions/9620278/how-do-i-make-calls-to-a-rest-api-using-c

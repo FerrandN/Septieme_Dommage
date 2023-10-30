@@ -1,0 +1,5 @@
+- Participants puisse afficher leur pool
+
+- Creer un tournoi grâce au bot
+
+- Commande "relance" pour demander à ceuxx qui ont pas payer mais qui sont inscrit

@@ -1,0 +1,4 @@
+Difficulté technique:
+J'ai 2 sites
+Envoi un token pour l'authentification
+Pour ne pas avoir à s'authentifier 2 fois

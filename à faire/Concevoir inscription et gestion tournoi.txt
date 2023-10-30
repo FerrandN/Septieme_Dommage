@@ -1,0 +1,4 @@
+Réfléchir à l'application
+Concevoir Le diagramme des uses cases
+Diagramme de séquence
+Diagramme d'activité
