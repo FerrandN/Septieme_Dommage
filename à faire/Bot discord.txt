@@ -1,7 +1,0 @@
-1) Creer le bot
-2) Ajouter les commandes (basique discord)
-3) Communiquer avec challonge
-3) Creer les commandes spécifiques aux besoins 7D
-
-token:
-MTE2ODg0Mzk5MDc5MjE1OTI3Mg.Gc_G_B.9pzupSfJ_SuKjGrV_DYzvEVP_fLjAugB6LBlZM
