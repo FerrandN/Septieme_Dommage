@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "tt7xjY4JlqyOzwEFy1C1E4MdFrxz9901zndpQk30IoDDFre1o6ELICh5yWJjlOpVxk2WZlZzSQ0KhWCkrtT3Bg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\nicol\\source\\repos\\challongeAPI\\challongeAPI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\nicol\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

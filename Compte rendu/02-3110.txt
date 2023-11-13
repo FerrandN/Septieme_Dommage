@@ -1,0 +1,16 @@
+Compte rendu 31/10/23
+
+La conception est terminé, mais à revoir.
+Beaucoup d'élèments sont trop flou encore pour savoir comment les élèments vont interagir entre eux.
+
+Bot discord fonctionnel, il manque plus qu'a lui rajouter les fonctionalités.
+Fait via ce tuto:
+https://www.youtube.com/watch?v=qxlmioSDWmk&list=PLcpUxmcrEm_Bn4K-kcE9ebsQPvNcR8KZx&index=1&pp=iAQB
+
+J'ai repensé au site, il faudra le faire si on veux recreer la DDB accessible sur FFTCG.FR aussi, comme on en a parler hier.
+
+L'objéctif pour moi pour demain c'est de comprendre comment l'API challonge fonctionne. Et essayer de communiquer avec via le bot discord.
+
+Je t'embêterai pas demain, j'ai de la doc à lire normalement, mais tu aura des news dans la journée en fonction de comment ça avance.
+
+Par contre, ça serait bien que Jeudi on sâche comme faire pour l'installation des élèments de l'environement genre la BDD justement et l'hebergement du Bot.

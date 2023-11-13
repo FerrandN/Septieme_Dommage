@@ -1,0 +1,12 @@
+Compte-rendu 08-0711
+
+Les fonctionalitées principale du robot sont faites.
+Il faut voir pour mettre des restrictions et de la sécurité.
+En tout cas on a tester on peu l'ajouter à un discord et creer / recevoir / s'ajouter à des tournois.
+Demain je m'occupe d'ajouter les critères avec le volet déroulant.
+
+J'ai un soucis avec les communautés, quand un tournoi est dans une commu je trouve pas comment obtenir les infos du tournoi.
+l'URL change et ça fou le bordel, donc je vais voir ce que je dois faire.
+
+Aussi j'ai vu ma prof pour un point, et il faudra à un moment que je fasse des fonctionalitées qui serviront pas pour 7D mais dont j'ai besoin pour valider le titre.
+

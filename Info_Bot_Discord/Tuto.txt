@@ -1,2 +1,9 @@
 https://www.youtube.com/watch?v=VK-POE_eP9E
 https://www.youtube.com/watch?v=qxlmioSDWmk&list=PLcpUxmcrEm_Bn4K-kcE9ebsQPvNcR8KZx
+https://www.ezzylearning.net/tutorial/how-to-consume-third-party-web-apis-in-asp-net-core
+https://www.youtube.com/watch?v=elMpS1Js7rc
+https://www.youtube.com/watch?v=zUS07Ro0kiQ
+https://www.ionos.fr/digitalguide/serveur/know-how/creer-un-bot-discord/#:~:text=Cliquez%20sur%20«%20Discord%20API%20».,sous%20«%20Ajouter%20un%20Bot%20».
+https://github.com/rtlcopymemory/Challonge-CSharp-API/blob/master/Api.cs
+
+

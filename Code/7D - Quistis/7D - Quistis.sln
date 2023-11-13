@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34219.65
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "7D - Quistis", "7D - Quistis.csproj", "{E701DA71-832A-4A13-9F83-D8D797307468}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIChallongeClass", "..\APIChallongeClass\APIChallongeClass.csproj", "{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E701DA71-832A-4A13-9F83-D8D797307468}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E701DA71-832A-4A13-9F83-D8D797307468}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E701DA71-832A-4A13-9F83-D8D797307468}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E701DA71-832A-4A13-9F83-D8D797307468}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3F7E7722-09FB-4FDC-ACA1-10F031BEEF49}
+	EndGlobalSection
+EndGlobal

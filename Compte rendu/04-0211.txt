@@ -1,0 +1,5 @@
+Compte rendu 02/11/23
+
+J'ai pu creer une commande discord qui interagit avec l'API.
+Par contre imposible de faire fonctionne le framework newtonsoft.
+J'éspère que Laurent pourra m'aider parce que je suis rester facile 4H dessus et impossible de faire fonctionner la techno

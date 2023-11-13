@@ -1,0 +1,33 @@
+0) Shuffle Pool et lancer tournoi
+
+1) Faire une commande pour rentrer les scores
+[faire la user story]
+
+2) Envoyer un message dans le channel quand le tournoi est creer avec un tuto pour s'inscrire
+
+3)"quand on creer un tournoi, le rajouter dans le subdomain 7D"
+
+4) Ajouter les restrictions
+
+
+Finis
++lancement du tournoi (à tester)
++Shuffle des pools/seeds
+
+à tester
++affichage pairing suivants ou affichage des pools
++publication des pools ou des pairings
++fin tournoi 
+
+à faire
+
+
+
+enregistrement des scores des matchs
+rectifications scores matchs
+
+Validation via paypal
+Validation via decklist
+
+conclusion phase (swiss/round robin)
+lancement phase suivante

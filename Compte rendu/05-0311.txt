@@ -1,0 +1,8 @@
+Compte rendu 03/11/23
+
+La partie communication personne/discord/challonge est faites.
+On peu accèder aux tournoi d'un compte, soit en rentrant l'id ou le nom soit en affichant tout les tournois.
+Pour lundi j'éspère finir la partie création de tournoi depuis le bot.
+
+L'objèctif après c'est de pouvoir s'inscrire avec le bot.
+Voilà
