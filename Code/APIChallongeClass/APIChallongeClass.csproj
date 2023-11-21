@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="ConnectionChallongeAPI.cs" />
     <Compile Include="JSONReaderClass.cs" />
+    <Compile Include="JSONReaderSubdomainClass.cs" />
     <Compile Include="MatchesData.cs" />
     <Compile Include="Participants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

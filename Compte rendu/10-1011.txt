@@ -1,7 +1,0 @@
-Compte rendu 10-11-23
-
-Gestion des subdomains complète
-Ajout de restriction, seul les utilisateurs avec le tag "7ème dommage" en minuscule avec l'espace, peuvent utiliser le bot.
-La commande startTournament est prête mais je ne peu pas la tester le temps que le bot se mette à jour, je vois ça Lundi.
-Suppréssion des joueurs dans un tournoi Fait
-Et affichage des infos joueurs enregistrer dans un tournoi fait aussi

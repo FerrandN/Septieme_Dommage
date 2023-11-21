@@ -1,4 +1,4 @@
-﻿using _7D___Quistis.commands;
+﻿using _7D___Quistis.SlashCommands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using System.Threading.Tasks;
@@ -9,13 +9,15 @@ using System;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.SlashCommands;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace _7D___Quistis
 {
     internal class Program
     {
         //Instance of discord
-        private static DiscordClient Client { get; set; }
+        public static DiscordClient Client { get; set; }
         private static CommandsNextExtension Commands { get; set; }
         static async Task Main(string[] args)
         {
@@ -31,7 +33,7 @@ namespace _7D___Quistis
                 TokenType = TokenType.Bot,
                 AutoReconnect = true
             };
-
+            
             Client = new DiscordClient(discordConfig);
 
             Client.UseInteractivity(new InteractivityConfiguration()
@@ -40,6 +42,7 @@ namespace _7D___Quistis
             });
 
             Client.Ready += Client_Ready;
+            Client.ComponentInteractionCreated += Button_Pressed;
 
             var commandsConfig = new CommandsNextConfiguration()
             {
@@ -52,15 +55,50 @@ namespace _7D___Quistis
             Commands = Client.UseCommandsNext(commandsConfig);
             var slashCommandsConfig = Client.UseSlashCommands();
 
-            slashCommandsConfig.RegisterCommands<SlashCommands>();
+            slashCommandsConfig.RegisterCommands<ChallongeCommands>();
 
             await Client.ConnectAsync();
-            await Task.Delay(-1);
+            while (true)
+            {
+                await Task.Delay(-1);
+            }
         }
 
-        private static Task Client_Ready(DiscordClient sender, DSharpPlus.EventArgs.ReadyEventArgs args)
+        public static async Task Button_Pressed(DiscordClient sender, ComponentInteractionCreateEventArgs args)
         {
-            return Task.CompletedTask;
+            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
+            await jsonReader.ReadJSON();
+            string name = args.User.Username;//name of participant
+                                            //create element to send to API
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("participant[name]", name);
+            if (jsonReader.subdomain != "")
+            {
+                dic.Add("{tournament}", jsonReader.subdomain + "-" + args.Message.Components.First().Components.First().CustomId);
+            }
+            else
+            {
+                dic.Add("{tournament}", args.Interaction.Data.Name);
+            }
+                //send to API
+                await ConnectionChallongeAPI.AddParticipant(dic);
+
+            try
+            {
+                await args.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(args.User.Username + " Merci pour votre inscription :)"));
+            }
+            catch
+            {
+                await args.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage,
+                    new DiscordInteractionResponseBuilder().WithContent("Une erreur c'est produite, merci de contact @Nekoyuki0070"));
+            }
+
+        }
+
+        private static async Task Client_Ready(DiscordClient sender, DSharpPlus.EventArgs.ReadyEventArgs args)
+        {
+            await Task.CompletedTask;
         }
     }
 }

@@ -1,2 +1,0 @@
-Bot communique avec le site
-Le site communique avec Challonge

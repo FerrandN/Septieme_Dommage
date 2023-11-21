@@ -1,5 +1,0 @@
-Compte rendu 09-11-23
-
-Remplacement des commandes ! par des commandes /
-Modification du code pour gerer les "subdomains" (bug avec la commande /getalltournament à corriger)
-Ajout de Choix et d'option pour les commandes (type de tournois, date de départ ect..)

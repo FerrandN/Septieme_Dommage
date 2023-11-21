@@ -1,6 +1,0 @@
-Compte rendu 03-0111
-
-Laurent m'a bien aidé, j'arrive à creer une apli console qui communique avec Challonge.
-L'objéctif maintenant c'est de fusioner les 2 morceaux d'appli en une seule.
-Quand ça seras fait je repasserais par une petite phase de conception, pour faire en sorte que le code soit propre.
-J'éspère que vendredi j'aurais réussis à creer un tournoi depuis le bot.

@@ -1,9 +1,0 @@
-Compte rendu 06/11/23
-
-Tentative de faire la partie "création de tournoi" depuis la bot.
-Ajout des "slash commands" pour pouvoir pré remplir les formulaires
-afin de faciliter l'utilisation des commandes.
-
-problème entre les "command" et "slashcommand" voir ce qu'on garde ou pas.
-
-à faire: creer un tournoi depuis une slash commande

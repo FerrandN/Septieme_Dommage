@@ -1,3 +1,5 @@
+C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.csproj.AssemblyReference.cache
+C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.csproj.CoreCompileInputs.cache
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\7D - Quistis.exe.config
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\7D - Quistis.exe
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\7D - Quistis.pdb
@@ -37,8 +39,14 @@ C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Numerics.Vectors.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Threading.Channels.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Threading.Tasks.Extensions.xml
-C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.csproj.AssemblyReference.cache
-C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.csproj.CoreCompileInputs.cache
 C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.csproj.CopyComplete
 C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.exe
 C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.pdb
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Interactive.Async.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Linq.Async.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Reactive.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.ValueTuple.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Interactive.Async.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Linq.Async.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Reactive.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.ValueTuple.xml
