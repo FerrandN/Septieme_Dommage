@@ -11,6 +11,14 @@ using DSharpPlus.EventArgs;
 using DSharpPlus.SlashCommands;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using _7D___Quistis.DataBase;
+using Npgsql;
+using System.Xml.Linq;
+using System.Reflection;
+using DSharpPlus.AsyncEvents;
+using DSharpPlus.SlashCommands.EventArgs;
+using System.Threading;
 
 namespace _7D___Quistis
 {
@@ -19,9 +27,9 @@ namespace _7D___Quistis
         //Instance of discord
         public static DiscordClient Client { get; set; }
         private static CommandsNextExtension Commands { get; set; }
+
         static async Task Main(string[] args)
         {
-
             //discord bot configuration
             var jsonReader = new JSONReaderClass("config.json");
             await jsonReader.ReadJSON();
@@ -43,7 +51,8 @@ namespace _7D___Quistis
 
             Client.Ready += Client_Ready;
             Client.ComponentInteractionCreated += Button_Pressed;
-
+            Client.ModalSubmitted += ModalEventHandler;
+            
             var commandsConfig = new CommandsNextConfiguration()
             {
                 StringPrefixes = new string[] { jsonReader.prefix },
@@ -56,7 +65,7 @@ namespace _7D___Quistis
             var slashCommandsConfig = Client.UseSlashCommands();
 
             slashCommandsConfig.RegisterCommands<ChallongeCommands>();
-
+            slashCommandsConfig.SlashCommandExecuted += CommandsExecuted;
             await Client.ConnectAsync();
             while (true)
             {
@@ -64,41 +73,89 @@ namespace _7D___Quistis
             }
         }
 
+        private static async Task CommandsExecuted(SlashCommandsExtension sender, SlashCommandExecutedEventArgs args)
+        {
+            await args.Context.Channel.SendMessageAsync($"{args.Context.Member.Nickname} used {args.Context.CommandName}");
+
+            if(args.Context.Interaction.Data.Options != null)
+            {
+                foreach (var option in args.Context.Interaction.Data.Options)
+                {
+                    await args.Context.Channel.SendMessageAsync("Command name: " + option.Name + " values " + option.Value.ToString());
+                    Thread.Sleep(TimeSpan.FromSeconds(0.5));
+                };
+            }
+        }
         public static async Task Button_Pressed(DiscordClient sender, ComponentInteractionCreateEventArgs args)
         {
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
-            string name = args.User.Username;//name of participant
-                                            //create element to send to API
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic.Add("participant[name]", name);
-            if (jsonReader.subdomain != "")
+            if(args.Interaction.Data.CustomId == "scoreDropDownList")
             {
-                dic.Add("{tournament}", jsonReader.subdomain + "-" + args.Message.Components.First().Components.First().CustomId);
+                string selectedOption = args.Values.First().ToString();
+                string[] values = selectedOption.Split(' ');
+                if(values.Count() < 4)
+                {
+                    await args.Interaction.Channel.SendMessageAsync("une erreur c'est produite, svp contacter @nekoyuki");
+                    throw new Exception("value from scoredropdownlist less than 4");
+                }
+                await ChallongeCommands.DisplayScoreModal(values[0], values[1], values[2], values[3], args);
             }
-            else
+            else if (args.Interaction.Data.CustomId == "RegistrationButton")
             {
-                dic.Add("{tournament}", args.Interaction.Data.Name);
-            }
-                //send to API
-                await ConnectionChallongeAPI.AddParticipant(dic);
+                await ConnectionChallongeAPI.AddParticipant(args.Message.Components.First().Components.First().CustomId, args.User.Username);
 
-            try
-            {
-                await args.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent(args.User.Username + " Merci pour votre inscription :)"));
-            }
-            catch
-            {
-                await args.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage,
-                    new DiscordInteractionResponseBuilder().WithContent("Une erreur c'est produite, merci de contact @Nekoyuki0070"));
-            }
+                //add participant to database
+                bool addedToDB = await DBEngine.StorePlayer(args.User.Username);
 
+                if (addedToDB)
+                {
+                    await args.Channel.SendMessageAsync($"{args.User.Username} a effectué sa première inscription !");
+                }
+                DSharpPlus.Entities.DiscordButtonComponent label = (DiscordButtonComponent)args.Message.Components.First().Components.First();
+                
+                //ask participant for info
+                await ChallongeCommands.DisplayRegistrationModal(label.Label, args.User.Username, args);
+            }
         }
 
         private static async Task Client_Ready(DiscordClient sender, DSharpPlus.EventArgs.ReadyEventArgs args)
         {
             await Task.CompletedTask;
+        }
+
+        public static async Task ModalEventHandler(DiscordClient sender, ModalSubmitEventArgs args)
+        {
+            if (args.Interaction.Data.CustomId == "Score")
+            {
+                var values = args.Values;
+
+                //tournoi, match, j1, j2, winner
+                await ConnectionChallongeAPI.AddScore(values.Values.ElementAt(0), values.Values.ElementAt(1), Int32.Parse(values.Values.ElementAt(2)), Int32.Parse(values.Values.ElementAt(3)), values.Values.ElementAt(4));
+                //matchid, j1, j2, winner
+                await DBEngine.AddScoreToMatch(Int32.Parse(values.Values.ElementAt(1)), Int32.Parse(values.Values.ElementAt(2)), Int32.Parse(values.Values.ElementAt(3)), values.Values.ElementAt(4));
+
+                try
+                {
+                    string looser = values.Values.ElementAt(4) != args.Values.ElementAt(3).Key ? args.Values.ElementAt(3).Key : args.Values.ElementAt(2).Key;
+                    //compute bounty
+                    if (await DBEngine.GetScore(values.Values.ElementAt(4)) * 2 < await DBEngine.GetScore(looser))
+                    {
+                            await DBEngine.AddBounty(values.Values.ElementAt(4));
+                    }
+                }
+                catch
+                {
+                    await args.Interaction.Channel.SendMessageAsync("Error Something went wrong please contact @Nekoyuki");
+                }
+                await args.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().WithContent("Le score a bien été ajouté, merci :) "));
+
+            }
+            else if (args.Interaction.Data.CustomId == "RegistrationTournament") 
+            {
+                var values = args.Values;
+                await ConnectionChallongeAPI.AddParticipant(values.Values.ElementAt(1), values.Values.ElementAt(0));
+                await DBEngine.PostRegistration(values.Values.ElementAt(2),values.Values.ElementAt(1),values.Values.ElementAt(0));
+                await args.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().WithContent($"{args.Interaction.User.Username} Merci pour votre inscription :) "));
+            }
         }
     }
 }

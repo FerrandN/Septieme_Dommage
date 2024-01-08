@@ -15,22 +15,26 @@ namespace _7D___Quistis.ChoiceProvider
         List<DiscordApplicationCommandOptionChoice> commandOptions = new List<DiscordApplicationCommandOptionChoice>();
         public async Task<IEnumerable<DiscordApplicationCommandOptionChoice>> Provider()
         {
-            await GetPendingAllTournament();
-            return commandOptions.ToArray();
+            await GetPendingAllInProgressTournament();
+            if(commandOptions.Count > 0)
+            {
+                return commandOptions.ToArray();
+            }
+            return commandOptions;
         }
 
-        private async Task GetPendingAllTournament()
+        private async Task GetPendingAllInProgressTournament()
         {
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
-
-            string result = await ConnectionChallongeAPI.GetJson(jsonReader.subdomain);
-
+            string result = await ConnectionChallongeAPI.GetTournamentWithState("","");
             List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 
             foreach (var tournament in tournaments)
             {
-                commandOptions.Add(new DiscordApplicationCommandOptionChoice(tournament.tournament.name.ToString(), tournament.tournament.url.ToString()));
+                if(tournament.tournament.state.ToString() == "underway" || tournament.tournament.state.ToString() == "group_stages_underway" || tournament.tournament.state.ToString() == "awaiting_review")
+                {
+                    commandOptions.Add(new DiscordApplicationCommandOptionChoice(tournament.tournament.name.ToString(), tournament.tournament.url.ToString()));
+                }
+                
             }
         }
     }

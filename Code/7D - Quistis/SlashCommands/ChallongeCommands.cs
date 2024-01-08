@@ -25,12 +25,22 @@ using System.Xml.Linq;
 using DSharpPlus.Interactivity.Extensions;
 using _7D___Quistis.ChoiceProvider;
 using DSharpPlus.EventArgs;
+using System.ComponentModel;
+using _7D___Quistis.DataBase;
+using Npgsql;
+using System.Windows.Forms;
+using System.Windows;
+using static System.Windows.Forms.LinkLabel;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+using System.IO.Pipes;
+using JWTManager;
 
 namespace _7D___Quistis.SlashCommands
 {
     public class ChallongeCommands : ApplicationCommandModule
     {
-        [SlashCommand("creertournoi", "Creer un tournoi")]
+        [SlashCommand("Creer_tournoi", "Creer un tournoi")]
         public async Task CreateTournament(InteractionContext ctx,
         [Choice("single elimination","single elimination")]
         [Choice("double elimination","double elimination")]
@@ -39,19 +49,15 @@ namespace _7D___Quistis.SlashCommands
         [Option("TypeDeTournoi", "Type du tournoi")] string type,//Type of tournament
 
         [Option("NomDuTournoi", "Nom du tournoi")] string name,//name of tournament
-
+        [Choice("2024-12-24 18:30:00","default")]
         [Option("DateDeDepart", "format: YYYY-MM-DD HH:MM:SS")] string date, //date and hours at which tournament starts
 
         [Option("IdDuTournoi", "l'identifiant Du Tournoi")] string url) //tournament id) 
         {
-            bool haspermission = HasPermission(ctx);
-
-            if (haspermission)
+            if (await HasPermission(ctx))
             {
+                //tell discord to wait for response
                 await ctx.DeferAsync();
-
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
 
                 //create element to send to API
                 Dictionary<string, string> dic = new Dictionary<string, string>();
@@ -60,22 +66,31 @@ namespace _7D___Quistis.SlashCommands
                 dic.Add("tournament[url]", url);
                 dic.Add("tournament[tournament_type]", type);
 
-                if (jsonReader.subdomain != "")
+                //add round robin datas
+                if (type == "round robin")
                 {
-                    dic.Add($"tournament[subdomain]", jsonReader.subdomain);
+                    dic.Add("tournament[group_stages_enabled]", "true");
+                    // à modifier si on veux plus ou moin de joueur par pool
+                    dic.Add("tournament[participants_count]", "4");
                 }
 
                 try
                 {
-                    //send to API
+                    //ask datas from api
                     await ConnectionChallongeAPI.PostTournament(dic);
 
+                    //add embed
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()
                     {
                         Title = "Creer Tournoi"
                     }));
 
+                    //store data in DB
+                    await DBEngine.PostTournament(type.Replace(' ', '_'), name);
+
+
+                    //display info if everything is ok
                     DiscordMessageBuilder embedMessage = new DiscordMessageBuilder()
                         .AddEmbed(new DiscordEmbedBuilder()
                         .WithColor(DiscordColor.Azure)
@@ -85,8 +100,8 @@ namespace _7D___Quistis.SlashCommands
                     await ctx.Channel.SendMessageAsync(SetMessage("Worked perfectly", "Tournament created at: https://challonge.com/fr/" + url, true));
                     DiscordMessageBuilder messageWithButton = new DiscordMessageBuilder();
 
-                    messageWithButton.AddComponents(new DiscordButtonComponent(ButtonStyle.Primary,url.ToString(), "cliquer pour rejoindre"));
-
+                    messageWithButton.AddComponents(new DiscordButtonComponent(ButtonStyle.Primary,"RegistrationButton", $"{url}"));
+                    
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder(messageWithButton));
 
                 }
@@ -94,48 +109,23 @@ namespace _7D___Quistis.SlashCommands
                 {
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
-
-            }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
             }
         }
 
-        [SlashCommand("modifiertournoi", "Modifie un tournoi")]
+        [SlashCommand("Modifier_tournoi", "Modifie un tournoi")]
         public async Task UpdateTournament(InteractionContext ctx,
 
         [ChoiceProvider(typeof(DiscordChoiceProviderGetAllTournament))]
         [Option("tournament","tournament URL")] string tournamenturl)//allow group stage)
         {
-            bool haspermission = HasPermission(ctx);
-
-            if (haspermission)
+            if (await HasPermission(ctx))
             {
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-                //create element to send to API
-                Dictionary<string, string> dic = new Dictionary<string, string>();
-                dic.Add("tournament[url]", tournamenturl);
-
                 await ctx.DeferAsync();
-
-                string link = "";
-                if (jsonReader.subdomain != "")
-                {
-                    link = "/" + jsonReader.subdomain + "-" + tournamenturl + ".json";
-                    dic.Add("tournament[subdomain]", jsonReader.subdomain);
-                }
-                else
-                {
-                    link = "/" + tournamenturl + ".json";
-                }
-
 
                 try
                 {
                     //send to API
-                    await ConnectionChallongeAPI.UpdateTournament(dic, link);
+                    await ConnectionChallongeAPI.UpdateTournament(tournamenturl);
 
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()
@@ -156,45 +146,35 @@ namespace _7D___Quistis.SlashCommands
                 {
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
-
-            }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
             }
         }
 
-        [SlashCommand("ajoutemoi", "Ajoute l'utilisateur au tournoi")]
+        [SlashCommand("Ajoute_moi", "Ajoute l'utilisateur au tournoi")]
         public async Task AddToTournament(InteractionContext ctx,
+        [Option("DeckList", "Decklist")] string decklist,
         [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
         [Option("pendingtournament","tournament URL")] string tournamenturl) //tournament id) 
         {
             await ctx.DeferAsync();
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
-            string name = ctx.User.Username;//name of participant
-                                            //create element to send to API
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic.Add("participant[name]", name);
-            if (jsonReader.subdomain != "")
-            {
-                dic.Add("{tournament}", jsonReader.subdomain + "-" + tournamenturl);
-            }
-            else
-            {
-                dic.Add("{tournament}", tournamenturl);
-            }
-
             try
             {
                 //send to API
-                await ConnectionChallongeAPI.AddParticipant(dic);
+                await ConnectionChallongeAPI.AddParticipant(tournamenturl,ctx.User.Username);
 
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                 .AddEmbed(new DiscordEmbedBuilder()
                 {
                     Title = "Ajouter au tournoi"
                 }));
+
+                bool addedToDB = await DBEngine.StorePlayer(ctx.User.Username);
+                await DBEngine.PostRegistration(decklist, tournamenturl, ctx.User.Username);
+
+
+                if (addedToDB)
+                {
+                    await ctx.Channel.SendMessageAsync($"{ctx.User.Username} a effectué sa première inscription !");
+                }
 
                 await ctx.Channel.SendMessageAsync(SetMessage("Worked perfectly", "You have been added to the tournament : https://challonge.com/fr/" + tournamenturl, true));
 
@@ -205,70 +185,57 @@ namespace _7D___Quistis.SlashCommands
             }
         }
 
-        [SlashCommand("ajoutejoueur", "Ajoute le joueur au tournoi")]
+        [SlashCommand("Ajoute_joueur", "Ajoute le joueur au tournoi")]
         public async Task AddSomeoneToTournament(InteractionContext ctx,
-        [Option("NomJoueur", "Nom du joueur à supprimer")] DiscordUser user,
+        [Option("NomJoueur", "Nom du joueur à ajouter")] DiscordUser user,
+        [Option("DeckList","Decklist")]string decklist,
         [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl) //tournament id) 
         {
-            await ctx.DeferAsync();
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
-
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic.Add("participant[name]", user.Username);
-            if (jsonReader.subdomain != "")
+            if(await HasPermission(ctx))
             {
-                dic.Add("{tournament}", jsonReader.subdomain + "-" + tournamenturl);
-            }
-            else
-            {
-                dic.Add("{tournament}", tournamenturl);
-            }
-
-            try
-            {
-                //send to API
-                await ConnectionChallongeAPI.AddParticipant(dic);
-
-
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-                .AddEmbed(new DiscordEmbedBuilder()
+                await ctx.DeferAsync();
+                try
                 {
-                    Title = "Ajouter au tournoi"
-                }));
+                    //send to API
+                    await ConnectionChallongeAPI.AddParticipant(tournamenturl, user.Username);
 
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder()
+                    .AddEmbed(new DiscordEmbedBuilder()
+                    {
+                        Title = "Ajouter au tournoi"
+                    }));
 
-                await ctx.Channel.SendMessageAsync(SetMessage("Worked perfectly", "You added" + user.Username + "to the tournament : https://challonge.com/fr/" + tournamenturl, true));
+                    bool addedToDB = await DBEngine.StorePlayer(user.Username);
+                    await DBEngine.PostRegistration(decklist, tournamenturl, user.Username);
 
-            }
-            catch
-            {
-                await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
+                    if (addedToDB)
+                    {
+                        await ctx.Channel.SendMessageAsync($"{ctx.User.Username} a effectué sa première inscription !");
+                    }
+
+                    await ctx.Channel.SendMessageAsync(SetMessage("Worked perfectly", "You added " + user.Username + " to the tournament : https://challonge.com/fr/" + tournamenturl, true));
+
+                }
+                catch
+                {
+                    await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
+                }
             }
         }
 
-        [SlashCommand("effacetournois", "Efface le tournoi")]
+        [SlashCommand("Efface_tournois", "Efface le tournoi")]
         public async Task DeleteTournament(InteractionContext ctx,
         [ChoiceProvider(typeof(DiscordChoiceProviderGetAllTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl) //tournament id) 
         {
-            bool haspermission = HasPermission(ctx);
-            if (haspermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
-
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                //create element to send to API
-                Dictionary<string, string> dic = new Dictionary<string, string>();
-                string link = SetString(jsonReader.subdomain, tournamenturl);
-                dic.Add("{tournament}", link);
                 try
                 {
                     //send to API
-                    await ConnectionChallongeAPI.DeleteTournament(dic);
+                    await ConnectionChallongeAPI.DeleteTournament(tournamenturl);
 
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()
@@ -284,41 +251,21 @@ namespace _7D___Quistis.SlashCommands
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
             }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
-            }
         }
 
-        [SlashCommand("afficheparticipants", "Affiche tout les participants inscrits au tournoi")]
+        [SlashCommand("Affiche_participants", "Affiche tout les participants inscrits au tournoi")]
         public async Task GetPlayers(InteractionContext ctx,
         [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl) //tournament id) 
         {
-
-            bool hasPermission = HasPermission(ctx);
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
-
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                //create element to send to API
-                string link = "";
-                if (jsonReader.subdomain != "None")
-                {
-                    link = "/" + jsonReader.subdomain + "-" + tournamenturl;
-                }
-                else
-                {
-                    link = "/" + tournamenturl;
-                }
 
                 try
                 {
                     //send to API
-                    string result = await ConnectionChallongeAPI.GetParticipant(link);
+                    string result = await ConnectionChallongeAPI.GetParticipant(tournamenturl);
 
                     List<Participants.Root> tournaments = JsonConvert.DeserializeObject<List<Participants.Root>>(result);
 
@@ -332,6 +279,7 @@ namespace _7D___Quistis.SlashCommands
 
                     foreach (var participant in tournaments)
                     {
+                        Thread.Sleep(TimeSpan.FromSeconds(2));
                         await ctx.Channel.SendMessageAsync(SetMessage($"Id du participant: {participant.participant.id}", $"Nom du participant: {participant.participant.name}", true));
                     }
                 }
@@ -340,25 +288,16 @@ namespace _7D___Quistis.SlashCommands
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
             }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
-            }
         }
 
-        [SlashCommand("affichechaquetournois", "Affiche les informations de tout les tournois")]
+        [SlashCommand("Affiche_chaque_tournois", "Affiche les informations de tout les tournois")]
         public async Task GetAllTournament(InteractionContext ctx) //tournament id)
         {
-            bool hasPermission = HasPermission(ctx);
-
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
 
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                string result = await ConnectionChallongeAPI.GetJson(jsonReader.subdomain);
+                string result = await ConnectionChallongeAPI.GetTournament("");
 
                 List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 
@@ -374,25 +313,16 @@ namespace _7D___Quistis.SlashCommands
                     Thread.Sleep(TimeSpan.FromSeconds(2)); //cooldown the request per sec
                 }
             }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
-            }
         }
 
-        [SlashCommand("affichetournoienattente", "Affiche les informations de tout les tournois en attente d'inscription")]
+        [SlashCommand("Affiche_tournoi_en_attente", "Affiche les informations de tout les tournois en attente d'inscription")]
         public async Task GetAllPendingTournament(InteractionContext ctx)
         {
-            bool hasPermission = HasPermission(ctx);
-
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
 
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                string result = await ConnectionChallongeAPI.GetPendingTournament(jsonReader.subdomain);
+                string result = await ConnectionChallongeAPI.GetTournamentWithState("","pending");
 
                 List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 
@@ -410,26 +340,16 @@ namespace _7D___Quistis.SlashCommands
                     await ctx.Channel.SendMessageAsync(SetMessage($"Tournament name: {tournament.tournament.name}", $"Tournament URL: {tournament.tournament.url}", true));
                 }
             }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
-            }
-
         }
 
-        [SlashCommand("affichetournoiencour", "Affiche les informations de tout les tournois en cour")]
+        [SlashCommand("Affiche_tournoi_en_cour", "Affiche les informations de tout les tournois en cour")]
         public async Task GetAllInProgressTournament(InteractionContext ctx)
         {
-            bool hasPermission = HasPermission(ctx);
-
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
 
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                string result = await ConnectionChallongeAPI.GetInProgressTournament(jsonReader.subdomain);
+                string result = await ConnectionChallongeAPI.GetTournamentWithState("","in_progress");
 
                 List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 
@@ -447,38 +367,18 @@ namespace _7D___Quistis.SlashCommands
                     await ctx.Channel.SendMessageAsync(SetMessage($"Tournament name: {tournament.tournament.name}", $"Tournament URL: {tournament.tournament.url}", true));
                 }
             }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
-            }
-
         }
 
-        [SlashCommand("afficheuntournoi", "Affiche les informations d'un tournoi en particulier")]
+        [SlashCommand("Affiche_un_tournoi", "Affiche les informations d'un tournoi en particulier")]
         public async Task GetTournament(InteractionContext ctx,
-        [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
+        [ChoiceProvider(typeof(DiscordChoiceProviderGetAllTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl)
         {
-
-            bool hasPermission = HasPermission(ctx);
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
 
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                string link = "";
-                if (jsonReader.subdomain != "None")
-                {
-                    link = "/" + jsonReader.subdomain + "-" + tournamenturl + ".json";
-                }
-                else
-                {
-                    link = "/" + tournamenturl + ".json";
-                }
-
-                string result = await ConnectionChallongeAPI.GetJson(link);
+                string result = await ConnectionChallongeAPI.GetTournament(tournamenturl);
 
                 TournamentData.Root tournament = JsonConvert.DeserializeObject<TournamentData.Root>(result);
 
@@ -491,45 +391,24 @@ namespace _7D___Quistis.SlashCommands
 
 
                 await ctx.Channel.SendMessageAsync(SetMessage($"Tournament name: {tournament.tournament.name}", $"Tournament URL: {tournament.tournament.url}", true));
-            }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
+                await ctx.Channel.SendMessageAsync($"state: {tournament.tournament.state}");
             }
         }
 
-        [SlashCommand("supprimejoueur", "Supprime le joueur du tournoi")]
+        [SlashCommand("Efface_joueur", "Supprime le joueur du tournoi")]
         public async Task RemovePlayer(InteractionContext ctx,
         [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl,
         [Option("NomJoueur", "Nom du joueur à supprimer")] DiscordUser user)
         {
-            bool haspermission = HasPermission(ctx);
-            if (haspermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
-
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-                
-                //create element to send to API
-                Dictionary<string, string> dic = new Dictionary<string, string>();
-                string link = "";
-                if (jsonReader.subdomain != "None")
-                {
-                    link = "/" + jsonReader.subdomain + "-" + tournamenturl;
-                }
-                else
-                {
-                    link = "/" + tournamenturl;
-                }
-                dic.Add("{tournament}", link);
-                dic.Add("{participant_id}", user.Username);
 
                 try
                 {
                     //send to API
-                    await ConnectionChallongeAPI.DeleteParticipant(dic);
+                    await ConnectionChallongeAPI.DeleteParticipant(tournamenturl,user.Username);
 
 
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
@@ -546,46 +425,25 @@ namespace _7D___Quistis.SlashCommands
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
             }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
-            }
         }
 
-        [SlashCommand("demarre", "Demarre le tournoi")]
+        [SlashCommand("Demarre", "Demarre le tournoi")]
         public async Task Start(InteractionContext ctx,
-        [ChoiceProvider(typeof(DiscordChoiceProviderGetAllTournament))]
+        [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl)
         {
-            bool haspermission = HasPermission(ctx);
-
-            if (haspermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
 
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                Dictionary<string, string> dic = new Dictionary<string, string>();
-                if (jsonReader.subdomain != "None")
-                {
-                    dic.Add("{tournament}", jsonReader.subdomain + "-" + tournamenturl);
-                }
-                else
-                {
-                    dic.Add("{tournament}", tournamenturl);
-                }
-
-
                 try
                 {
-                    //send to API
-                    await ConnectionChallongeAPI.StartTournament(dic);
+                    await ConnectionChallongeAPI.StartTournament(tournamenturl);
 
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()
                     {
-                        Title = "Demmare tournoi"
+                        Title = "Demare tournoi"
                     }));
 
                     await ctx.Channel.SendMessageAsync(SetMessage("Worked perfectly", "Tournament as started !! GL (Monks are the bests)", true));
@@ -594,42 +452,31 @@ namespace _7D___Quistis.SlashCommands
                 {
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
-
-            }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
             }
         }
 
-        [SlashCommand("termine", "Termine le tournoi")]
+        [SlashCommand("Termine", "Termine le tournoi")]
         public async Task Finalize(InteractionContext ctx,
-        [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
+        [ChoiceProvider(typeof(DiscordChoiceProviderGetInProgressTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl)
         {
-            bool haspermission = HasPermission(ctx);
-            if (haspermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
-
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                Dictionary<string, string> dic = new Dictionary<string, string>();
-                if (jsonReader.subdomain != "None")
-                {
-                    dic.Add("{tournament}", jsonReader.subdomain + "-" + tournamenturl);
-                }
-                else
-                {
-                    dic.Add("{tournament}", tournamenturl);
-                }
-
 
                 try
                 {
                     //send to API
-                    await ConnectionChallongeAPI.FinalizeTournament(dic);
+                    await ConnectionChallongeAPI.FinalizeTournament(tournamenturl);
+
+                    string result = await ConnectionChallongeAPI.GetParticipant(tournamenturl);
+
+                    List<Participants.Root> participants = JsonConvert.DeserializeObject<List<Participants.Root>>(result);
+
+                    foreach( Participants.Root participant in participants )
+                    {
+                        await AddTournamentPoins(participant.participant, participants.Count);
+                    }
 
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()
@@ -643,45 +490,38 @@ namespace _7D___Quistis.SlashCommands
                 {
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
-
-            }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
             }
         }
 
-        [SlashCommand("affichematche", "Affiche tout les matches")]
+        [SlashCommand("Affiche_matche", "Affiche tout les matches")]
         public async Task DisplayMatches(InteractionContext ctx,
-        [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
+        [ChoiceProvider(typeof(DiscordChoiceProviderGetInProgressTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl)
         {
-            bool hasPermission = HasPermission(ctx);
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
 
-                var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-                await jsonReader.ReadJSON();
-
-                string link = "";
-                if (jsonReader.subdomain != "None")
-                {
-                    link = "/" + jsonReader.subdomain + "-" + tournamenturl;
-                }
-                else
-                {
-                    link = "/" + tournamenturl;
-                }
-
-                string result = await ConnectionChallongeAPI.GetMatches(link);
-                string participantsJson = await ConnectionChallongeAPI.GetParticipant(link);
+                string result = await ConnectionChallongeAPI.GetMatches(tournamenturl);
+                string participantsJson = await ConnectionChallongeAPI.GetParticipant(tournamenturl);
+                string tournamentJson = await ConnectionChallongeAPI.GetTournament(tournamenturl);
 
                 List<MatchesData.Root> matches = JsonConvert.DeserializeObject<List<MatchesData.Root>>(result);
 
                 List<Participants.Root> participants = JsonConvert.DeserializeObject<List<Participants.Root>>(participantsJson);
 
-                Dictionary<string, string> participantsName = CreateParticipantsNameList(matches, participants);
+                TournamentData.Root tournament = JsonConvert.DeserializeObject<TournamentData.Root>(tournamentJson);
+
+                Dictionary<string, string> participantsName = new Dictionary<string, string>();
+
+                if (tournament.tournament.state == "group_stages_underway")
+                {
+                    participantsName = CreateParticipantsNameListRR(matches, participants);
+                }
+                else
+                {
+                    participantsName = CreateParticipantsNameList(matches, participants);
+                }
 
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                 .AddEmbed(new DiscordEmbedBuilder()
@@ -693,155 +533,179 @@ namespace _7D___Quistis.SlashCommands
 
                 foreach (MatchesData.Root matche in matches)
                 {
-                    Thread.Sleep(TimeSpan.FromSeconds(2)); //cooldown the request per sec
                     imatches++;
 
-                    string player1name = "";
-                    string player2name = "";
-
-                    foreach (KeyValuePair<string, string> pair in participantsName)
+                    if (matche.match.state == "open")
                     {
-                        if (matche.match.player1_id.ToString() == pair.Value)
-                        {
-                            player1name = pair.Key;
-                        }
-                        if (matche.match.player2_id.ToString() == pair.Value)
-                        {
-                            player2name = pair.Key;
-                        }
-                    }
+                        Thread.Sleep(TimeSpan.FromSeconds(2)); //cooldown the request per sec
+                        string player1name = "";
+                        string player2name = "";
 
-                    await ctx.Channel.SendMessageAsync
-                        (SetMessage
-                        ("Matche " + imatches,
-                        $"ID: {matche.match.id}\r\n" + $"Joueur 1: {player1name}\r\n" + $"Joueur 2: {player2name}\r\n",
-                        true));
+                        foreach (KeyValuePair<string, string> pair in participantsName)
+                        {
+                            if (matche.match.player1_id.ToString() == pair.Value)
+                            {
+                                player1name = pair.Key;
+                            }
+                            if (matche.match.player2_id.ToString() == pair.Value)
+                            {
+                                player2name = pair.Key;
+                            }
+                        }
+                        await DBEngine.PostMatch(matche.match.id, tournamenturl, player1name, player2name);
+                        await ctx.Channel.SendMessageAsync
+                            (SetMessage
+                            ("Matche " + imatches,
+                            $"ID: {matche.match.id}\r\n" + $"Joueur 1: {player1name}\r\n" + $"Joueur 2: {player2name}\r\n",
+                            true));
+                    }
                 }
-            }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
             }
         }
 
-        [SlashCommand("score", "Ajoute un score au tournoi")]
+        [SlashCommand("Score", "Ajoute un score au tournoi")]
         public async Task AddScore(InteractionContext ctx,
-        [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
-        [Option("tournament","Tournament URL")] string tournamenturl,
-        [Option("Matchid", "Match id")] string matchid,
-        [Choice("7","7")]
-        [Choice("6","6")]
-        [Choice("5","5")]
-        [Choice("4","4")]
-        [Choice("3","3")]
-        [Choice("2","2")]
-        [Choice("1","1")]
-        [Choice("0","0")]
-        [Option("Scorejoueur1", "Score joueur 1")] string scoreJ1,
-        [Choice("7","7")]
-        [Choice("6","6")]
-        [Choice("5","5")]
-        [Choice("4","4")]
-        [Choice("3","3")]
-        [Choice("2","2")]
-        [Choice("1","1")]
-        [Choice("0","0")]
-        [Option("Scorejoueur2", "Score joueur 2")] string scoreJ2,
-        [Option("WinnerID", "Winner ID")] DiscordUser winner)
+        [ChoiceProvider(typeof(DiscordChoiceProviderGetInProgressTournament))]
+        [Option("tournament","Tournament URL")] string tournamenturl)
         {
             await ctx.DeferAsync();
 
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
-
-            string link = "";
-            if (jsonReader.subdomain != "")
-            {
-                link = "/" + jsonReader.subdomain + "-" + tournamenturl;
-            }
-            else
-            {
-                link = "/" + tournamenturl;
-            }
-
-            string result = await ConnectionChallongeAPI.GetMatches(link);
-            string participantsJson = await ConnectionChallongeAPI.GetParticipant(link);
+            string result = await ConnectionChallongeAPI.GetMatches(tournamenturl);
+            string participantsJson = await ConnectionChallongeAPI.GetParticipant(tournamenturl);
+            string tournamentJson = await ConnectionChallongeAPI.GetTournament(tournamenturl);
 
             List<MatchesData.Root> matches = JsonConvert.DeserializeObject<List<MatchesData.Root>>(result);
 
             List<Participants.Root> participants = JsonConvert.DeserializeObject<List<Participants.Root>>(participantsJson);
 
-            Dictionary<string, string> participantsName = CreateParticipantsNameList(matches, participants);
+            TournamentData.Root tournament = JsonConvert.DeserializeObject<TournamentData.Root>(tournamentJson);
 
-            KeyValuePair<string, string> winnerNameAndId = new KeyValuePair<string, string>();
+            Dictionary<string, string> participantsName = new Dictionary<string, string>();
 
-            foreach (KeyValuePair<string, string> key in participantsName)
+            List<MatchesData.Root> playerMatches = new List<MatchesData.Root>();
+
+            List<DiscordSelectComponentOption> matchListOption = new List<DiscordSelectComponentOption>();
+
+            //Ajouter les matches du joueur dans la liste "matche"
+            if(tournament.tournament.tournament_type != "round robin")
             {
-                if (winner.Username == key.Key)
+                //on récupère les infos du joueur
+                Participants.Root player = ReturnParticipants(ctx.User.Username,participants);
+
+                foreach(MatchesData.Root match in matches)
                 {
-                    winnerNameAndId = key;
+                    if(match.match.state != "complete")
+                    {
+                        if (match.match.player1_id == player.participant.id || match.match.player2_id == player.participant.id)
+                        {
+                            playerMatches.Add(match);
+                        }
+                    }
+                }
+
+                participantsName = CreateParticipantsNameList(playerMatches, participants);
+
+                foreach(MatchesData.Root match in playerMatches)
+                {
+                    string player1Name = "";
+                    string player2Name = "";
+
+                    foreach(Participants.Root participant in participants)
+                    {
+                        if(participant.participant.id == match.match.player1_id)
+                        {
+                            player1Name = participant.participant.name;
+                        }
+                        if (participant.participant.id == match.match.player2_id)
+                        {
+                            player2Name = participant.participant.name;
+                        }
+                    }
+                    matchListOption.Add(new DiscordSelectComponentOption($"tournoi {tournamenturl} : {player1Name} vs {player2Name}", $"{tournamenturl} {player1Name} {player2Name} {match.match.id}"));
                 }
             }
-
-            try
+            else
             {
-                //send to API
-                await ConnectionChallongeAPI.AddScore(link, Int32.Parse(scoreJ1), Int32.Parse(scoreJ2), winnerNameAndId.Value, tournamenturl, matchid);
+                //on récupère les infos du joueur
+                Participants.Root player = ReturnParticipants(ctx.User.Username, participants);
 
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-                .AddEmbed(new DiscordEmbedBuilder()
+                foreach (MatchesData.Root match in matches)
                 {
-                    Title = "Ajoute score"
-                }));
+                    if (match.match.player1_id.ToString() == player.participant.group_player_ids.First().ToString() || match.match.player2_id.ToString() == player.participant.group_player_ids.First().ToString())
+                    {
+                        playerMatches.Add(match);
+                    }
+                }
 
-                await ctx.Channel.SendMessageAsync(SetMessage("Worked perfectly", $"Player: {winner} won, score was: " + (Int32.Parse(scoreJ1) > Int32.Parse(scoreJ2) ? $"{scoreJ1} - {scoreJ2}" : $"{scoreJ2} - {scoreJ1}"), true));
+                participantsName = CreateParticipantsNameList(playerMatches, participants);
+
+                foreach (MatchesData.Root match in playerMatches)
+                {
+                    string player1Name = "";
+                    string player2Name = "";
+
+                    foreach (Participants.Root participant in participants)
+                    {
+                        if (participant.participant.group_player_ids.First().ToString() == match.match.player1_id.ToString())
+                        {
+                            player1Name = participant.participant.name;
+                        }
+                        if (participant.participant.group_player_ids.First().ToString() == match.match.player2_id.ToString())
+                        {
+                            player2Name = participant.participant.name;
+                        }
+                    }
+                    matchListOption.Add(new DiscordSelectComponentOption($"tournoi {tournamenturl} : {player1Name} vs {player2Name}", $"{tournamenturl} {player1Name} {player2Name} {match.match.id}"));
+                }
             }
-            catch
-            {
-                await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
-            }
+            await SendDropDownList(matchListOption, ctx);
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder());
         }
 
-        [SlashCommand("affichescore", "Affiche tout les scores d'un tournoi")]
+        [SlashCommand("Affiche_score", "Affiche tout les scores d'un tournoi")]
         public async Task DisplayScore(InteractionContext ctx,
         [ChoiceProvider(typeof(DiscordChoiceProviderGetEndedTournament))]
         [Option("tournament","Tournament URL")] string tournamenturl) //tournament id) 
         {
             await ctx.DeferAsync();
 
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
-
-            bool hasPermission = HasPermission(ctx);
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
-                //create element to send to API
-                string link = "";
-                if (jsonReader.subdomain != "None")
-                {
-                    link = "/" + jsonReader.subdomain + "-" + tournamenturl;
-                }
-                else
-                {
-                    link = "/" + tournamenturl;
-                }
-
                 try
                 {
                     //send to API
-                    string result = await ConnectionChallongeAPI.GetParticipant(link);
+                    string result = await ConnectionChallongeAPI.GetParticipant(tournamenturl);
+                    string t = await ConnectionChallongeAPI.GetTournament(tournamenturl);
 
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()
                     {
                         Title = "Affiche score"
                     }));
+                    TournamentData.Root td = JsonConvert.DeserializeObject<TournamentData.Root>(t);
+                    List<Participants.Root> participants = JsonConvert.DeserializeObject<List<Participants.Root>>(result);
+                    if(participants.Count > 0)
+                    {
+                        if(td.tournament.tournament_type != "round robin")
+                        participants.Sort((p1, p2) => Int32.Parse(p1.participant.final_rank.ToString()).CompareTo(Int32.Parse(p2.participant.final_rank.ToString())));
+                        else
+                        {
+                            foreach(Participants.Root p in participants)
+                            {
+                                if(p.participant.final_rank == null)
+                                {
+                                    p.participant.final_rank = participants.Count;
+                                }
+                            }
+                            participants.Sort((p1, p2) => Int32.Parse(p1.participant.final_rank.ToString()).CompareTo(Int32.Parse(p2.participant.final_rank.ToString()))); 
+                        }
+                    }
+                    else
+                    {
+                        await ctx.Channel.SendMessageAsync(SetMessage("Error", "Not enough player", false));
+                    }
 
-                    List<Participants.Root> tournaments = JsonConvert.DeserializeObject<List<Participants.Root>>(result);
-                    tournaments.Sort((p1, p2) => Int32.Parse(p1.participant.final_rank.ToString()).CompareTo(Int32.Parse(p2.participant.final_rank.ToString())));
-                    /*await ctx.Channel.SendMessageAsync($"Tournament ID: {tournaments.tournament.}");*/
-
-                    foreach (var participant in tournaments)
+                    foreach (var participant in participants)
                     {
                         Thread.Sleep(TimeSpan.FromSeconds(2)); //cooldown the request per sec
                         await ctx.Channel.SendMessageAsync(SetMessage("Score", $"Nom du participant: @{participant.participant.name} \r\n" + $"Classement du participant: {participant.participant.final_rank}", true));
@@ -852,25 +716,19 @@ namespace _7D___Quistis.SlashCommands
                     await ctx.Channel.SendMessageAsync(SetMessage("Error", "Something went wrong please retry later or contact @Nekoyuki", false));
                 }
             }
-            else
-            {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
-            }
         }
 
-        [SlashCommand("afficheinscription", "Affiche les boutons d'inscriptions au tournoi en cour")]
+        [SlashCommand("Affiche_inscription", "Affiche les boutons d'inscriptions au tournoi en cour")]
         public async Task afficheinscription(InteractionContext ctx)
         {
-            bool hasPermission = HasPermission(ctx);
-
-            if (hasPermission)
+            if (await HasPermission(ctx))
             {
                 await ctx.DeferAsync();
 
                 var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
                 await jsonReader.ReadJSON();
 
-                string result = await ConnectionChallongeAPI.GetPendingTournament(jsonReader.subdomain);
+                string result = await ConnectionChallongeAPI.GetTournamentWithState("","pending");
 
                 List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 
@@ -882,46 +740,178 @@ namespace _7D___Quistis.SlashCommands
                     messageWithButton.AddComponents(new DiscordButtonComponent(ButtonStyle.Primary, tournament.tournament.url.ToString(), tournament.tournament.url.ToString()));
                 }
 
-                await ctx.Channel.SendMessageAsync(messageWithButton.AddEmbed(new DiscordEmbedBuilder()
-                    .WithTitle($"Click to join")
-                    ));
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder());
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder(messageWithButton));
+            }
+        }
+
+
+        [SlashCommand("Mes_matches", "Affiche tout les matches")]
+        public async Task DisplayMyMatches(InteractionContext ctx,
+        [ChoiceProvider(typeof(DiscordChoiceProviderGetPendingTournament))]
+        [Option("tournament","Tournament URL")] string tournamenturl)
+        {
+            await ctx.DeferAsync();
+
+            string result = await ConnectionChallongeAPI.GetMatches(tournamenturl);
+            string participantsJson = await ConnectionChallongeAPI.GetParticipant(tournamenturl);
+            string tournamentJson = await ConnectionChallongeAPI.GetTournament(tournamenturl);
+
+            List<MatchesData.Root> matches = JsonConvert.DeserializeObject<List<MatchesData.Root>>(result);
+
+            List<Participants.Root> participants = JsonConvert.DeserializeObject<List<Participants.Root>>(participantsJson);
+
+            TournamentData.Root tournament = JsonConvert.DeserializeObject<TournamentData.Root>(tournamentJson);
+
+            Dictionary<string, string> participantsName = new Dictionary<string, string>();
+
+            if (tournament.tournament.state == "group_stages_underway")
+            {
+                participantsName = CreateParticipantsNameListRR(matches, participants);
             }
             else
             {
-                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
+                participantsName = CreateParticipantsNameList(matches, participants);
+            }
+
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder()
+            .AddEmbed(new DiscordEmbedBuilder()
+            {
+                Title = "Affiche matches"
+            }));
+
+            int imatches = 0;
+
+            foreach (MatchesData.Root matche in matches)
+            {
+                imatches++;
+
+                string player1name = "";
+                string player2name = "";
+
+                foreach (KeyValuePair<string, string> pair in participantsName)
+                {
+                    if (matche.match.player1_id.ToString() == pair.Value)
+                    {
+                        player1name = pair.Key;
+                    }
+                    if (matche.match.player2_id.ToString() == pair.Value)
+                    {
+                        player2name = pair.Key;
+                    }
+                }
+
+                if (player1name == ctx.User.Username || player2name == ctx.User.Username)
+                {
+                    await DBEngine.PostMatch(matche.match.id, tournamenturl, player1name, player2name);
+
+                    await ctx.Channel.SendMessageAsync
+                        (SetMessage
+                        ("Matche " + imatches,
+                        $"ID: {matche.match.id}\r\n" + $"Joueur 1: {player1name}\r\n" + $"Joueur 2: {player2name}\r\n",
+                        true));
+                    Thread.Sleep(TimeSpan.FromSeconds(2)); //cooldown the request per sec
+                }
             }
         }
 
-        [SlashCommand("test", "Affiche les boutons d'inscriptions au tournoi en cour")]
-        public async Task Test(InteractionContext ctx)
+        [SlashCommand("Refresh", "Affiche les boutons d'inscriptions au tournoi en cour")]
+        public async void Refresh(InteractionContext ctx)
         {
+            await Program.Client.GetSlashCommands().RefreshCommands();
+        }
+
+        [SlashCommand("ChangePoint", "change Point")]
+        public async Task ChangePoint(InteractionContext ctx,
+            [Option("points","points")] string userInput,
+            [Option("joueur","joueur")] DiscordUser user)
+        {
+            if(await HasPermission(ctx))
+            {
+                int points = Int32.Parse(userInput);
+                await DBEngine.ChangePlayerPoints(points, user.Username);
+                if (points > 0)
+                {
+                    await ctx.Channel.SendMessageAsync($"l'utilisateur {user.Username} a gagné {points}");
+                }
+                else
+                {
+                    await ctx.Channel.SendMessageAsync($"{points} ont été retiré a l'utilisateur {user.Username}, villain !");
+                }
+            }
 
         }
 
-        public bool HasPermission(InteractionContext ctx)
+        [SlashCommand("ChangeNomPrenom", "Change Nom Prenom")]
+        public async Task ChangePlayerNameAndSurname(InteractionContext ctx,
+            [Option("Nom", "Nom")] string surname,
+            [Option("Prénom", "Prénom")] string name,
+            [Option("joueur", "joueur")] DiscordUser user)
+        {
+            if(await HasPermission(ctx))
+            {
+                await ctx.DeferAsync();
+                await DBEngine.ChangePlayerNameAndUsername(surname, name, ctx.User.Username);
+                await ctx.Channel.SendMessageAsync($"l'utilisateur {user.Username} a correctement été nommé {surname} {name}");
+            }
+
+        }
+
+        [SlashCommand("Test", "Test")]
+        public async Task Test(InteractionContext ctx)
+        {
+            string requestBody = "{\n" +
+                "client_id: " + "a192729b4fdd3d07ae9b4760f480cf14b50ad4d88cfe661adf39c2ecba1184ac,\n" +
+                "scope: " + "me tournaments:read tournaments:write matches:read matches:write participants:read participants:write communities:manage\n" +
+                "}";
+
+            //JWT
+            CreateJWT jwt = new CreateJWT(requestBody);
+            string token = jwt.GetEncodedJwt();
+
+            await ConnectionChallongeAPI.Test(token);
+
+        }
+
+        public static async Task DisplayRegistrationModal(string tournamentName, string playerName, ComponentInteractionCreateEventArgs e)
+        {
+            var modal = new DiscordInteractionResponseBuilder()
+            .WithTitle("Enregistrement tournoi")
+            .WithCustomId("RegistrationTournament")
+            .AddComponents(new TextInputComponent("Pseudo", "Name", "pseudo", playerName))
+            .AddComponents(new TextInputComponent("Tournois", "Tournois", "Tournois", tournamentName))
+            .AddComponents(new TextInputComponent("DeckList", "ffdecks", "HTTP://FFDECKS",null,false,TextInputStyle.Short));
+
+            await e.Interaction.CreateResponseAsync(InteractionResponseType.Modal, modal);
+        }
+        public static async Task DisplayScoreModal(string tournamentName,string player1, string player2, string matchId, ComponentInteractionCreateEventArgs e)
+        {
+            var modal = new DiscordInteractionResponseBuilder()
+            .WithTitle("Enregistrement tournoi")
+            .WithCustomId("Score")
+            .AddComponents(new TextInputComponent("Tournois", "Tournois", "Tournois", tournamentName))
+            .AddComponents(new TextInputComponent("Match ID", "matchid", "", matchId))
+            .AddComponents(new TextInputComponent("score " + player1, player1, "0-7"))
+            .AddComponents(new TextInputComponent("score " + player2, player2, "0-7"))
+            .AddComponents(new TextInputComponent("winner (supprimer le perdant)","winner", $"{player1} {player2}", $"{player1} {player2}"));
+
+            await e.Interaction.CreateResponseAsync(InteractionResponseType.Modal, modal);
+        }
+
+        public async Task<bool> HasPermission(InteractionContext ctx)
         {
             bool hasPermission = false;
             foreach (var role in ctx.Member.Roles)
             {
-                if (role.Name == "TO")
+                if (role.Name == "TO" || role.Name == "7ème dommage")
                 {
                     hasPermission = true;
                 }
             }
+            if(hasPermission == false)
+            {                      
+                await ctx.Channel.SendMessageAsync("vous n'avez pas l'autorisation d'utiliser les commandes");
+            }
             return hasPermission;
-        }
-        public string SetString(string str, string url)
-        {
-            if (str != "")
-            {
-                str = str + "-" + url + ".json";
-            }
-            else
-            {
-                str = url + ".json";
-            }
-            return str;
         }
 
         public DiscordMessageBuilder SetMessage(string title, string message, bool isSuccessfull)
@@ -941,6 +931,7 @@ namespace _7D___Quistis.SlashCommands
             {
                 foreach (Participants.Root participant in participants)
                 {
+                    //group player ID pour les round robin
                     if (match.match.player1_id == participant.participant.id && !matchesList.ContainsKey(participant.participant.name))
                     {
                         matchesList.Add(participant.participant.name, match.match.player1_id.ToString());
@@ -954,6 +945,141 @@ namespace _7D___Quistis.SlashCommands
             return matchesList;
         }
 
+        public Dictionary<string, string> CreateParticipantsNameListRR(List<MatchesData.Root> matches, List<Participants.Root> participants)
+        {
+            Dictionary<string, string> matchesList = new Dictionary<string, string>();
+
+            foreach (MatchesData.Root match in matches)
+            {
+                foreach (Participants.Root participant in participants)
+                {
+                    //group player ID pour les round robin
+                    if (match.match.player1_id == (long)participant.participant.group_player_ids.First() && !matchesList.ContainsKey(participant.participant.name))
+                    {
+                        matchesList.Add(participant.participant.name, match.match.player1_id.ToString());
+                    }
+                    if (match.match.player2_id == (long)participant.participant.group_player_ids.First() && !matchesList.ContainsKey(participant.participant.name))
+                    {
+                        matchesList.Add(participant.participant.name, match.match.player2_id.ToString());
+                    }
+                }
+            }
+            return matchesList;
+        }
+
+        public async Task AddTournamentPoins(Participant p, int count)
+        {
+            if(count > 24)
+            {
+                await ComputeScore25p(p);
+            }
+            else if(count > 8)
+            {
+                await ComputeScore24p(p);
+            }
+            else
+            {
+                await ComputeScore8p(p);
+            }
+        }
+
+        public async Task ComputeScore8p(Participant p)
+        {
+            if(Int32.Parse(p.final_rank.ToString()) == 1)
+            {
+                await DBEngine.ChangePlayerPoints(5, p.display_name);
+            }
+            else if(Int32.Parse(p.final_rank.ToString()) == 2)
+            {
+                await DBEngine.ChangePlayerPoints(3, p.display_name);
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) == 3 || Int32.Parse(p.final_rank.ToString()) == 4 )
+            {
+                await DBEngine.ChangePlayerPoints(2, p.display_name);
+            }
+            else
+            {
+                await DBEngine.ChangePlayerPoints(1, p.display_name);
+            }
+        }
+        public async Task ComputeScore24p(Participant p)
+        {
+            if (Int32.Parse(p.final_rank.ToString()) == 1)
+            {
+                await DBEngine.ChangePlayerPoints(7, p.username.ToString());
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) == 2)
+            {
+                await DBEngine.ChangePlayerPoints(5, p.username.ToString());
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) == 3 || Int32.Parse(p.final_rank.ToString()) == 4)
+            {
+                await DBEngine.ChangePlayerPoints(3, p.username.ToString());
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) <= 8)
+            {
+                await DBEngine.ChangePlayerPoints(2, p.username.ToString());
+            }
+            else
+            {
+                await DBEngine.ChangePlayerPoints(1, p.username.ToString());
+            }
+        }
+
+        public async Task ComputeScore25p(Participant p)
+        {
+            if (Int32.Parse(p.final_rank.ToString()) == 1)
+            {
+                await DBEngine.ChangePlayerPoints(10, p.username.ToString());
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) == 2)
+            {
+                await DBEngine.ChangePlayerPoints(7, p.username.ToString());
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) == 3 || Int32.Parse(p.final_rank.ToString()) == 4)
+            {
+                await DBEngine.ChangePlayerPoints(5, p.username.ToString());
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) <= 8)
+            {
+                await DBEngine.ChangePlayerPoints(3, p.username.ToString());
+            }
+            else if (Int32.Parse(p.final_rank.ToString()) <= 16)
+            {
+                await DBEngine.ChangePlayerPoints(2, p.username.ToString());
+            }
+            else
+            {
+                await DBEngine.ChangePlayerPoints(1, p.username.ToString());
+            }
+        }
+
+        private Participants.Root ReturnParticipants(string name, List<Participants.Root> Participants)
+        {
+            foreach (Participants.Root p in Participants)
+            {
+                if (p.participant.name == name)
+                {
+                    return p;
+                }
+            }
+            return null;
+        }
+
+        private async Task SendDropDownList(List<DiscordSelectComponentOption> matchListOption, InteractionContext ctx)
+        {
+            IEnumerable<DiscordSelectComponentOption> options = matchListOption.AsEnumerable();
+
+            var dropdown = new DiscordSelectComponent("scoreDropDownList", "Select...", options);
+
+            var dropDownMessage = new DiscordMessageBuilder()
+                .AddEmbed(new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Azure)
+                .WithTitle("Choisissez un match"))
+                .AddComponents(dropdown);
+
+            await ctx.Channel.SendMessageAsync(dropDownMessage);
+        }
         /*
         [RequireUserPermission(GuildPermission.Administrator, Group = "Permission")]
         [RequireOwner(Group = "Permission")]

@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.Remoting.Contexts;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,88 +16,24 @@ namespace APIChallongeClass
 {
     public static class ConnectionChallongeAPI
     {
-        public static async Task<string> GetJson(string id)
+        public static HttpClient GetClientConnection(JSONReaderClass json)
         {
             HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
-            return await GetTournament(client, id);
+            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(json.prefix + ":" + json.token)));
+            return client;
         }
 
-        public static async Task<string> GetPendingTournament(string id)
+        public static async Task<string> GetTournamentWithState(string url, string state)
         {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
 
-            string URL = $"https://{jsonToken.prefix}:{jsonToken.token}@api.challonge.com/v1/tournaments";
-            string querry = "";
+            HttpClient client = GetClientConnection(challongeJson);
 
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
 
-            if (id == "")
-            {
-                //all tournament no subdomain
-                querry = URL + ".json?state=pending";
-            }
-            else
-            {
-                //all tournament with subdomain
-                querry = $"{URL}.json?subdomain={id}&state=pending";
-            }
-
-            HttpResponseMessage response = await client.GetAsync(querry);
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        public static async Task<string> GetInProgressTournament(string id)
-        {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
-
-            string URL = $"https://{jsonToken.prefix}:{jsonToken.token}@api.challonge.com/v1/tournaments";
-            string querry = "";
-
-
-            if (id == "")
-            {
-                //all tournament no subdomain
-                querry = URL + ".json?state=in_progress";
-            }
-            else
-            {
-                //all tournament with subdomain
-                querry = $"{URL}.json?subdomain={id}&state=in_progress";
-            }
-
-            HttpResponseMessage response = await client.GetAsync(querry);
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        public static async Task<string> GetEndedTournament(string id)
-        {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
-
-            string URL = $"https://{jsonToken.prefix}:{jsonToken.token}@api.challonge.com/v1/tournaments";
-            string querry = "";
-
-
-            if (id == "")
-            {
-                //all tournament no subdomain
-                querry = URL + ".json?state=ended";
-            }
-            else
-            {
-                //all tournament with subdomain
-                querry = $"{URL}.json?subdomain={id}&state=ended";
-            }
+            string querry = QuerryBuilder.GenerateGetTournamentQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, state);
 
             HttpResponseMessage response = await client.GetAsync(querry);
             return await response.Content.ReadAsStringAsync();
@@ -103,21 +41,24 @@ namespace APIChallongeClass
 
         public static async Task PostTournament(Dictionary<string, string> dic)
         {
-            //set client
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
 
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
+            HttpClient client = GetClientConnection(challongeJson);
 
-            //set API URL
-            const string URL = "https://api.challonge.com/v1/";
-            const string querry = URL + "tournaments.json";
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            string querry = QuerryBuilder.GenerateGetTournamentQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, "", "");
 
             //add token to dictionnary for authentification
             if (!dic.ContainsKey("api_key"))
             {
-                dic.Add("api_key", jsonToken.token);
+                dic.Add("api_key", challongeJson.token);
+            }
+            if (subdomainJson.subdomain != "")
+            {
+                dic.Add($"tournament[subdomain]", subdomainJson.subdomain);
             }
 
             //Post datas to API
@@ -127,24 +68,38 @@ namespace APIChallongeClass
             await response.Content.ReadAsStringAsync();
         }
 
-        public static async Task UpdateTournament(Dictionary<string, string> dic, string link)
+        public static async Task UpdateTournament(string url)
         {
-            //set client
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
 
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
+            HttpClient client = GetClientConnection(challongeJson);
 
-            //set API URL
-            const string URL = "https://api.challonge.com/v1/tournaments";
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
 
-            //add token to dictionnary for authentification
-            if (!dic.ContainsKey("api_key"))
+            string querry = QuerryBuilder.GenerateGetTournamentQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "");
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("tournament[url]", url);
+            dic.Add("api_key", challongeJson.token);
+            dic.Add($"tournament[subdomain]", subdomainJson.subdomain);
+            if (subdomainJson.subdomain != "None")
             {
-                dic.Add("api_key", jsonToken.token);
+                dic.Add("{tournament}", subdomainJson.subdomain + "-" + url);
             }
-            string querry = URL + link;
+            else
+            {
+                dic.Add("{tournament}", url);
+            }
+
+            string tournament = await GetTournament(url);
+            TournamentData.Root t = JsonConvert.DeserializeObject<TournamentData.Root>(tournament);
+            if (t.tournament.tournament_type == "round robin" && t.tournament.state == "pending")
+            {
+                dic.Add("tournament[state]", "start_group_stage");
+            }
+
+
             //Post datas to API
             FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
 
@@ -152,262 +107,251 @@ namespace APIChallongeClass
             await response.Content.ReadAsStringAsync();
         }
 
-        public static async Task AddParticipant(Dictionary<string, string> dic)
+        public static async Task AddParticipant(string url, string username)
         {
-            //set client
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
 
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
+            HttpClient client = GetClientConnection(challongeJson);
 
-            //set API URL
-            const string URL = "https://api.challonge.com/v1/tournaments/";
-            string tournamentId = "";
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
 
-            //add token to dictionnary for authentification
-            if (!dic.ContainsKey("api_key"))
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("api_key", challongeJson.token);
+            dic.Add("participant[name]", username);
+            if (subdomainJson.subdomain != "")
             {
-                dic.Add("api_key", jsonToken.token);
-            }
-
-            //set datas for API
-            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
-            if(dic.ContainsKey("{tournament}"))
-            {
-                tournamentId = dic["{tournament}"];
-            }
-
-            //Post datas to API
-            HttpResponseMessage response = await client.PostAsync(URL + tournamentId + "/participants.json", content);
-            await response.Content.ReadAsStringAsync();
-        }
-
-        public static async Task DeleteTournament(Dictionary<string, string> dic)
-        {
-            //set client
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
-
-            //connect to client
-
-            //set API URL
-            string URL = $"https://{jsonToken.prefix}:{jsonToken.token}@api.challonge.com/v1/tournaments";
-            string tournamentId = "";
-
-            //set datas for API
-            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
-            if (dic.ContainsKey("{tournament}"))
-            {
-                tournamentId = dic["{tournament}"];
-            }
-
-            //Delete URL
-            HttpResponseMessage response = await client.DeleteAsync(URL + "/" + tournamentId);
-            await response.Content.ReadAsStringAsync();
-            await Task.CompletedTask;
-        }
-        public static async Task<string> GetTournament(HttpClient client, string id)
-        {
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-
-            string URL = $"https://{jsonToken.prefix}:{jsonToken.token}@api.challonge.com/v1/tournaments";
-            string querry = "";
-
-
-            if (id == "")
-            {
-                //all tournament no subdomain
-                querry = URL + ".json";
-            }
-            else if(id[0] == '/')
-            {
-                //one specified tournament
-                querry = URL + id;
+                dic.Add("{tournament}", subdomainJson.subdomain + "-" + url);
             }
             else
             {
-                //all tournament with subdomain
-                querry = $"{URL}.json?subdomain={id}";
+                dic.Add("{tournament}", url);
             }
-
-            HttpResponseMessage response = await client.GetAsync(querry);
-            return await response.Content.ReadAsStringAsync();
-        }
-        public static async Task<string> GetMatches(string link)
-        {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
-
-            string URL = $"https://{jsonToken.prefix}:{jsonToken.token}@api.challonge.com/v1/tournaments";
-            string querry = URL + link;
-
-            HttpResponseMessage response = await client.GetAsync(querry + "/matches.json");
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        public static async Task<string> GetParticipant(string id)
-        {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
-
-            string URL = $"https://{jsonToken.prefix}:{jsonToken.token}@api.challonge.com/v1/tournaments";
-            string querry = "";
-
-            //one specified tournament
-            querry = URL + id + "/participants.json" ;
-
-
-            HttpResponseMessage response = await client.GetAsync(querry);
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        public static async Task DeleteParticipant(Dictionary<string, string> dic)
-        {
-            //set client
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
-
-            //connect to client
-
-            //set API URL
-            string URL = $"https://api.challonge.com/v1/tournaments/";
-            string tournamentId = "";
-            string participantId = "";
-
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "/participants");
             //set datas for API
-            if (dic.ContainsKey("{tournament}"))
-            {
-                tournamentId = dic["{tournament}"];
-            }
-
-            if(dic.ContainsKey("{participant_id}"))
-            {
-                participantId = dic["{participant_id}"];
-            }
-
-            if (!dic.ContainsKey("api_key"))
-            {
-                dic.Add("api_key", jsonToken.token);
-            }
-
-            //Delete URL
-            HttpResponseMessage response = await client.DeleteAsync(URL + tournamentId + "/participants/" + participantId + ".json");
+            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
+            //Post datas to API
+            HttpResponseMessage response = await client.PostAsync(querry, content);
             await response.Content.ReadAsStringAsync();
         }
 
-        public static async Task StartTournament(Dictionary<string, string> dic)
+        public static async Task DeleteTournament(string url)
         {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            string tournamentId = "";
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
 
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
+            HttpClient client = GetClientConnection(challongeJson);
 
-            if (dic.ContainsKey("{tournament}"))
-            {
-                tournamentId = dic["{tournament}"];
-            }
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
 
-            if (!dic.ContainsKey("api_key"))
-            {
-                dic.Add("api_key", jsonToken.token);
-            }
+            string querry = QuerryBuilder.GenerateGetTournamentQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "");
 
-            //set API URL
-            string URL = "https://api.challonge.com/v1/tournaments/";
+            //Delete URL
+            HttpResponseMessage response = await client.DeleteAsync(querry);
+            await response.Content.ReadAsStringAsync();
+            await Task.CompletedTask;
+        }
+        public static async Task<string> GetTournament(string url)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client =  GetClientConnection(challongeJson);
+
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            string querry = QuerryBuilder.GenerateGetTournamentQuerry(challongeJson.prefix, challongeJson.token,subdomainJson.subdomain, url, "");
+
+            HttpResponseMessage response = await client.GetAsync(querry);
+            return await response.Content.ReadAsStringAsync();
+        }
+        public static async Task<string> GetMatches(string url)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client = GetClientConnection(challongeJson);
+
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "/matches") ;
+
+            HttpResponseMessage response = await client.GetAsync(querry);
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public static async Task<string> GetMatch(string url, string id)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client = GetClientConnection(challongeJson);
+
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, $"/matches/{id}");
+
+            HttpResponseMessage response = await client.GetAsync(querry);
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public static async Task<string> GetParticipant(string url)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client = GetClientConnection(challongeJson);
+
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "/participants");
+
+            HttpResponseMessage response = await client.GetAsync(querry);
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public static async Task DeleteParticipant(string url, string id)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client = GetClientConnection(challongeJson);
+
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("tournament[url]", url);
+            dic.Add("api_key", challongeJson.token);
+            dic.Add($"tournament[subdomain]", subdomainJson.subdomain);
+
+            await RandomizeTournament(url);
+
             FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
-            FormUrlEncodedContent con = new FormUrlEncodedContent(dic);
 
-            HttpResponseMessage randomizeMessage = await client.PostAsync(URL + tournamentId + "/participants/randomize.json", content);
-            HttpResponseMessage startMessage = await client.PostAsync(URL + tournamentId + "/start.json", con);
+            string querry = QuerryBuilder.GenerateDeleteParticipantQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, id);
+            HttpResponseMessage startMessage = await client.PostAsync(querry, content);
+
             await startMessage.Content.ReadAsStringAsync();
+        }
+
+        public static async Task StartTournament(string url)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client = GetClientConnection(challongeJson);
+
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("tournament[url]", url);
+            dic.Add("api_key", challongeJson.token);
+            dic.Add($"tournament[subdomain]", subdomainJson.subdomain);
+
+            await RandomizeTournament(url);
+
+            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
+
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "/start");
+            HttpResponseMessage startMessage = await client.PostAsync(querry, content);
+
+            await startMessage.Content.ReadAsStringAsync();
+        }
+
+        public static async Task RandomizeTournament(string url)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client = GetClientConnection(challongeJson);
+
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("tournament[url]", url);
+            dic.Add("api_key", challongeJson.token);
+            dic.Add($"tournament[subdomain]", subdomainJson.subdomain);
+
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "/participants/randomize");
+
+            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
+
+            HttpResponseMessage randomizeMessage = await client.PostAsync(querry, content);
             await randomizeMessage.Content.ReadAsStringAsync();
         }
 
-        public static async Task FinalizeTournament(Dictionary<string, string> dic)
+        public static async Task FinalizeTournament(string url)
         {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-            string tournamentId = "";
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
 
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
+            HttpClient client = GetClientConnection(challongeJson);
 
-            if (dic.ContainsKey("{tournament}"))
-            {
-                tournamentId = dic["{tournament}"];
-            }
-
-            if (!dic.ContainsKey("api_key"))
-            {
-                dic.Add("api_key", jsonToken.token);
-            }
-
-            //set API URL
-            string URL = "https://api.challonge.com/v1/tournaments/";
-            string querry = URL + tournamentId + "/finalize.json";
-            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
-
-            HttpResponseMessage startMessage = await client.PostAsync(querry, content);
-            await startMessage.Content.ReadAsStringAsync();
-        }
-
-        public static async Task AddScore(string link, int scoreJ1, int scoreJ2, string winner, string tournamentID, string matchID)
-        {
-            HttpClient client = new HttpClient();
-            var jsonToken = new JSONReaderClass("tokenchallonge.json");
-            await jsonToken.ReadJSON();
-
-            client.DefaultRequestHeaders.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(jsonToken.prefix + ":" + jsonToken.token)));
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
 
             Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("tournament[url]", url);
+            dic.Add("api_key", challongeJson.token);
+            dic.Add($"tournament[subdomain]", subdomainJson.subdomain);
 
-            if (!dic.ContainsKey("{tournament}"))
-            {
-                dic.Add("{tournament}", tournamentID);
-            }
+            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
 
-            if (!dic.ContainsKey("api_key"))
-            {
-                dic.Add("api_key", jsonToken.token);
-            }
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, url, "/finalize");
+            HttpResponseMessage finalizeMessage = await client.PostAsync(querry, content);
 
-            if(!dic.ContainsKey("{match_id}"))
-            {
-                dic.Add("{match_id}", matchID);
-            }
+            await finalizeMessage.Content.ReadAsStringAsync();
+        }
 
-            if (!dic.ContainsKey("match[scores_csv]"))
-            {
-                dic.Add("match[scores_csv]", $"{scoreJ1}" + "-" + $"{scoreJ2}");
-            }
+        public static async Task AddScore(string tournamentID, string matchID, int scoreJ1, int scoreJ2, string winner)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
 
-            if (!dic.ContainsKey("match[winner_id]"))
-            {
-                dic.Add("match[winner_id]", winner);
-            }
+            HttpClient client = GetClientConnection(challongeJson);
 
-            //set API URL
-            string URL = $"https://api.challonge.com/v1/tournaments";
-            string querry = URL + link + "/matches/" + matchID + ".json";
+            var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
+            await subdomainJson.ReadJSON();
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("{tournament}", tournamentID);
+            dic.Add("api_key", challongeJson.token);
+            dic.Add("{match_id}", matchID);
+            dic.Add("match[scores_csv]", $"{scoreJ1}" + "-" + $"{scoreJ2}");
+            dic.Add("match[winner_id]", winner);
+
+            string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, tournamentID, $"/matches/{matchID}");
             FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
 
             HttpResponseMessage startMessage = await client.PutAsync(querry,content);
             await startMessage.Content.ReadAsStringAsync();
         }
 
+        public static async Task Test(string jwt)
+        {
+            var challongeJson = new JSONReaderClass("tokenchallonge.json");
+            await challongeJson.ReadJSON();
+
+            HttpClient client = GetClientConnection(challongeJson);
+
+            string querry = "https://auth.challonge.com/oauth/authorize_device";
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("client_id", "a192729b4fdd3d07ae9b4760f480cf14b50ad4d88cfe661adf39c2ecba1184ac");
+            dic.Add("scope", "me tournaments:read tournaments:write matches:read matches:write participants:read participants:write communities:manage");
+
+            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
+
+            HttpResponseMessage startMessage = await client.PostAsync(querry,content);
+        }
     }
 }

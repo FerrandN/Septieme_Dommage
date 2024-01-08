@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "7D - Quistis", "7D - Quisti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIChallongeClass", "..\APIChallongeClass\APIChallongeClass.csproj", "{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JWTManager", "..\JWTManager\JWTManager.csproj", "{3D7024D9-BD52-4D50-9B8C-D68A30103647}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AFB2AB2D-32E5-417D-ADF5-D24DF7E8AC53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D7024D9-BD52-4D50-9B8C-D68A30103647}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D7024D9-BD52-4D50-9B8C-D68A30103647}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D7024D9-BD52-4D50-9B8C-D68A30103647}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D7024D9-BD52-4D50-9B8C-D68A30103647}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

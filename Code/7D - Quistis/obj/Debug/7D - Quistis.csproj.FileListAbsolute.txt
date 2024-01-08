@@ -10,17 +10,26 @@ C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\DSharpPlus.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\DSharpPlus.Interactivity.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\DSharpPlus.SlashCommands.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Bcl.HashCode.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Extensions.DependencyInjection.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Extensions.Logging.Abstractions.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Newtonsoft.Json.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Npgsql.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Buffers.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Collections.Immutable.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Diagnostics.DiagnosticSource.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Interactive.Async.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Linq.Async.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Memory.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Numerics.Vectors.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Reactive.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Text.Encodings.Web.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Text.Json.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Threading.Channels.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.ValueTuple.dll
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\APIChallongeClass.pdb
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\ConcurrentCollections.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\DSharpPlus.xml
@@ -28,25 +37,41 @@ C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\DSharpPlus.CommandsNext.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\DSharpPlus.Interactivity.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\DSharpPlus.SlashCommands.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Bcl.AsyncInterfaces.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Bcl.HashCode.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Extensions.DependencyInjection.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Extensions.DependencyInjection.Abstractions.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.Extensions.Logging.Abstractions.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Newtonsoft.Json.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Npgsql.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Buffers.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Collections.Immutable.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Diagnostics.DiagnosticSource.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Interactive.Async.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Linq.Async.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Memory.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Numerics.Vectors.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Reactive.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Text.Encodings.Web.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Text.Json.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Threading.Channels.xml
 C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Threading.Tasks.Extensions.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.ValueTuple.xml
 C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.csproj.CopyComplete
 C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.exe
 C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.pdb
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Interactive.Async.dll
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Linq.Async.dll
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Reactive.dll
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.ValueTuple.dll
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Interactive.Async.xml
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Linq.Async.xml
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.Reactive.xml
-C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.ValueTuple.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\JWTManager.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.Tokens.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.Logging.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\JWTManager.pdb
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\JWTManager.dll.config
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.Tokens.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\System.IdentityModel.Tokens.Jwt.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.Logging.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.Abstractions.xml
+C:\Users\nicol\source\repos\7D - Quistis\bin\Debug\Microsoft.IdentityModel.JsonWebTokens.xml
+C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.csproj.SuggestedBindingRedirects.cache
+C:\Users\nicol\source\repos\7D - Quistis\obj\Debug\7D - Quistis.exe.config

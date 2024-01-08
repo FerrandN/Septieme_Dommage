@@ -1,5 +1,6 @@
 ﻿using APIChallongeClass;
 using DSharpPlus.Entities;
+using DSharpPlus.SlashCommands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,21 +10,23 @@ using System.Threading.Tasks;
 
 namespace _7D___Quistis.ChoiceProvider
 {
-    public class DiscordChoiceProviderGetEndedTournament
+    public class DiscordChoiceProviderGetEndedTournament : IChoiceProvider
     {
         List<DiscordApplicationCommandOptionChoice> commandOptions = new List<DiscordApplicationCommandOptionChoice>();
         public async Task<IEnumerable<DiscordApplicationCommandOptionChoice>> Provider()
         {
             await GetAllEndedTournament();
-            return commandOptions.ToArray();
+            if(commandOptions.Count > 0)
+            {
+                return commandOptions.ToArray();
+            }
+            return commandOptions;
         }
 
         private async Task GetAllEndedTournament()
         {
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
 
-            string result = await ConnectionChallongeAPI.GetEndedTournament(jsonReader.subdomain);
+            string result = await ConnectionChallongeAPI.GetTournamentWithState("","ended");
 
             List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 

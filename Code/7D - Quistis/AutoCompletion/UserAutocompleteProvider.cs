@@ -33,7 +33,7 @@ namespace _7D___Quistis.SlashCommands
 
         private async Task<List<string>> FetchTournamentNames()
         {
-            string result = await ConnectionChallongeAPI.GetInProgressTournament("eca83949301db430ad068e13");
+            string result = await ConnectionChallongeAPI.GetTournamentWithState("","pending");
 
             List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 

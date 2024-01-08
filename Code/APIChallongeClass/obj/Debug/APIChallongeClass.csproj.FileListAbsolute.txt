@@ -1,9 +1,9 @@
+C:\Users\nicol\source\repos\APIChallongeClass\obj\Debug\APIChallongeClass.csproj.AssemblyReference.cache
+C:\Users\nicol\source\repos\APIChallongeClass\obj\Debug\APIChallongeClass.csproj.CoreCompileInputs.cache
 C:\Users\nicol\source\repos\APIChallongeClass\bin\Debug\APIChallongeClass.dll
 C:\Users\nicol\source\repos\APIChallongeClass\bin\Debug\APIChallongeClass.pdb
 C:\Users\nicol\source\repos\APIChallongeClass\bin\Debug\Newtonsoft.Json.dll
 C:\Users\nicol\source\repos\APIChallongeClass\bin\Debug\Newtonsoft.Json.xml
-C:\Users\nicol\source\repos\APIChallongeClass\obj\Debug\APIChallongeClass.csproj.AssemblyReference.cache
-C:\Users\nicol\source\repos\APIChallongeClass\obj\Debug\APIChallongeClass.csproj.CoreCompileInputs.cache
 C:\Users\nicol\source\repos\APIChallongeClass\obj\Debug\APIChallongeClass.csproj.CopyComplete
 C:\Users\nicol\source\repos\APIChallongeClass\obj\Debug\APIChallongeClass.dll
 C:\Users\nicol\source\repos\APIChallongeClass\obj\Debug\APIChallongeClass.pdb

@@ -15,16 +15,17 @@ namespace _7D___Quistis.ChoiceProvider
         List<DiscordApplicationCommandOptionChoice> commandOptions = new List<DiscordApplicationCommandOptionChoice>();
         public async Task<IEnumerable<DiscordApplicationCommandOptionChoice>> Provider()
         {
-            await GetPendingAllTournament();
-            return commandOptions.ToArray();
+            await GetAllTournament();
+            if (commandOptions.Count > 0)
+            {
+                return commandOptions.ToArray();
+            }
+            return commandOptions;
         }
 
-        private async Task GetPendingAllTournament()
+        private async Task GetAllTournament()
         {
-            var jsonReader = new JSONReaderSubdomainClass("subdomain.json");
-            await jsonReader.ReadJSON();
-
-            string result = await ConnectionChallongeAPI.GetJson(jsonReader.subdomain);
+            string result = await ConnectionChallongeAPI.GetTournament("");
 
             List<TournamentsData.Root> tournaments = JsonConvert.DeserializeObject<List<TournamentsData.Root>>(result);
 

@@ -46,10 +46,12 @@
   <ItemGroup>
     <Compile Include="ConnectionChallongeAPI.cs" />
     <Compile Include="JSONReaderClass.cs" />
+    <Compile Include="JSONReaderDBClass.cs" />
     <Compile Include="JSONReaderSubdomainClass.cs" />
     <Compile Include="MatchesData.cs" />
     <Compile Include="Participants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QuerryBuilder.cs" />
     <Compile Include="TournamentData.cs" />
     <Compile Include="TournamentsData.cs" />
   </ItemGroup>
