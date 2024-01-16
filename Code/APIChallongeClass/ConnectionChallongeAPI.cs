@@ -322,12 +322,24 @@ namespace APIChallongeClass
             var subdomainJson = new JSONReaderSubdomainClass("subdomain.json");
             await subdomainJson.ReadJSON();
 
+            string participantsJson = await GetParticipant(tournamentID);
+            List<Participants.Root> participants = JsonConvert.DeserializeObject<List<Participants.Root>>(participantsJson);
+
+            string pid = "";
+            foreach (Participants.Root p in participants)
+            {
+                if(winner == p.participant.name)
+                {
+                    pid = p.participant.id.ToString();
+                }
+            }
+
             Dictionary<string, string> dic = new Dictionary<string, string>();
             dic.Add("{tournament}", tournamentID);
             dic.Add("api_key", challongeJson.token);
             dic.Add("{match_id}", matchID);
             dic.Add("match[scores_csv]", $"{scoreJ1}" + "-" + $"{scoreJ2}");
-            dic.Add("match[winner_id]", winner);
+            dic.Add("match[winner_id]", pid);
 
             string querry = QuerryBuilder.GeneratePutTargetQuerry(challongeJson.prefix, challongeJson.token, subdomainJson.subdomain, tournamentID, $"/matches/{matchID}");
             FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
@@ -336,22 +348,9 @@ namespace APIChallongeClass
             await startMessage.Content.ReadAsStringAsync();
         }
 
-        public static async Task Test(string jwt)
+        public static async Task Test()
         {
-            var challongeJson = new JSONReaderClass("tokenchallonge.json");
-            await challongeJson.ReadJSON();
-
-            HttpClient client = GetClientConnection(challongeJson);
-
-            string querry = "https://auth.challonge.com/oauth/authorize_device";
-
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic.Add("client_id", "a192729b4fdd3d07ae9b4760f480cf14b50ad4d88cfe661adf39c2ecba1184ac");
-            dic.Add("scope", "me tournaments:read tournaments:write matches:read matches:write participants:read participants:write communities:manage");
-
-            FormUrlEncodedContent content = new FormUrlEncodedContent(dic);
-
-            HttpResponseMessage startMessage = await client.PostAsync(querry,content);
+            
         }
     }
 }

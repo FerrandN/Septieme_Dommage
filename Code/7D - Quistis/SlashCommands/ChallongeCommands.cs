@@ -35,6 +35,8 @@ using System.Net.Http;
 using Newtonsoft.Json.Linq;
 using System.IO.Pipes;
 using JWTManager;
+using System.Net;
+using System.Net.Http.Headers;
 
 namespace _7D___Quistis.SlashCommands
 {
@@ -49,7 +51,7 @@ namespace _7D___Quistis.SlashCommands
         [Option("TypeDeTournoi", "Type du tournoi")] string type,//Type of tournament
 
         [Option("NomDuTournoi", "Nom du tournoi")] string name,//name of tournament
-        [Choice("2024-12-24 18:30:00","default")]
+        [Choice("2024-12-24 18:30:00","2024-12-24 18:30:00")]
         [Option("DateDeDepart", "format: YYYY-MM-DD HH:MM:SS")] string date, //date and hours at which tournament starts
 
         [Option("IdDuTournoi", "l'identifiant Du Tournoi")] string url) //tournament id) 
@@ -99,8 +101,10 @@ namespace _7D___Quistis.SlashCommands
 
                     await ctx.Channel.SendMessageAsync(SetMessage("Worked perfectly", "Tournament created at: https://challonge.com/fr/" + url, true));
                     DiscordMessageBuilder messageWithButton = new DiscordMessageBuilder();
-
+                    
                     messageWithButton.AddComponents(new DiscordButtonComponent(ButtonStyle.Primary,"RegistrationButton", $"{url}"));
+                    DateTimeOffset dateTimeOffset = DateTimeOffset.Parse(date);
+                    await ctx.Guild.CreateEventAsync("Tournoi: " + name, type,null,ScheduledGuildEventType.External,ScheduledGuildEventPrivacyLevel.GuildOnly, dateTimeOffset,dateTimeOffset.AddHours(5),"Discord 7D");
                     
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder(messageWithButton));
 
@@ -389,9 +393,15 @@ namespace _7D___Quistis.SlashCommands
                     Title = "Afficher tournoi"
                 }));
 
-
-                await ctx.Channel.SendMessageAsync(SetMessage($"Tournament name: {tournament.tournament.name}", $"Tournament URL: {tournament.tournament.url}", true));
-                await ctx.Channel.SendMessageAsync($"state: {tournament.tournament.state}");
+                try
+                {
+                    await ctx.Channel.SendMessageAsync(SetMessage($"Tournament name: {tournament.tournament.name}", $"Tournament URL: {tournament.tournament.url}", true));
+                    await ctx.Channel.SendMessageAsync($"state: {tournament.tournament.state}");
+                }
+                catch (Exception ex)
+                {
+                    await ctx.Channel.SendMessageAsync($"Erreur, merci de contacter @Nekoyuki");
+                }
             }
         }
 
@@ -475,7 +485,7 @@ namespace _7D___Quistis.SlashCommands
 
                     foreach( Participants.Root participant in participants )
                     {
-                        await AddTournamentPoins(participant.participant, participants.Count);
+                        await AddTournamentPoins(participant.participant, participants.Count, tournamenturl);
                     }
 
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder()
@@ -857,19 +867,63 @@ namespace _7D___Quistis.SlashCommands
         }
 
         [SlashCommand("Test", "Test")]
+        [RequirePermissions(Permissions.Administrator, true)]
         public async Task Test(InteractionContext ctx)
         {
-            string requestBody = "{\n" +
-                "client_id: " + "a192729b4fdd3d07ae9b4760f480cf14b50ad4d88cfe661adf39c2ecba1184ac,\n" +
-                "scope: " + "me tournaments:read tournaments:write matches:read matches:write participants:read participants:write communities:manage\n" +
-                "}";
+            string requestBody = "{\"client_id\":\"a192729b4fdd3d07ae9b4760f480cf14b50ad4d88cfe661adf39c2ecba1184ac\",\"scope\":\"me tournaments:read matches:read participants:read\" }";
+            string jwt = await CreateJWT.GenerateJWT(requestBody);
 
-            //JWT
-            CreateJWT jwt = new CreateJWT(requestBody);
-            string token = jwt.GetEncodedJwt();
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("Signature", jwt);
 
-            await ConnectionChallongeAPI.Test(token);
+                //Device Grant Authorization Request
+                //HttpResponseMessage response = await client.PostAsync("https://auth.challonge.com/oauth/authorize_device", new StringContent(requestBody));
 
+                //Grant Request with community
+                HttpResponseMessage response = await client.GetAsync("https://api.challonge.com/oauth/authorize?scope=me tournaments:read matches:read participants:read&client_id=a192729b4fdd3d07ae9b4760f480cf14b50ad4d88cfe661adf39c2ecba1184ac&redirect_uri=&response_type=code&community_id=eca83949301db430ad068e13");
+                if (response.IsSuccessStatusCode)
+                {
+                    string code = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("Request succeeded!");
+                    Console.WriteLine(code);
+                }
+                else
+                {
+                    Console.WriteLine($"Request failed with status code: {response.StatusCode}");
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error content: {errorContent}");
+                }
+            }
+        }
+
+        [SlashCommand("Test2", "Test2")]
+        [RequirePermissions(Permissions.Administrator, true)]
+        public async Task Test2(InteractionContext ctx)
+        {
+            //Token Request
+            string requestBody = "{\"grant_type\":\"authorization_code\",\"code\":\"39467\", \"client_id\":\"a192729b4fdd3d07ae9b4760f480cf14b50ad4d88cfe661adf39c2ecba1184ac\" }";
+            string jwt = await CreateJWT.GenerateJWT(requestBody);
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("Signature", jwt);
+
+                HttpResponseMessage response = await client.PostAsync("https://api.challonge.com/oauth/token", new StringContent(requestBody));
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string code = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("Request succeeded!");
+                    Console.WriteLine(code);
+                }
+                else
+                {
+                    Console.WriteLine($"Request failed with status code: {response.StatusCode}");
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error content: {errorContent}");
+                }
+            }
         }
 
         public static async Task DisplayRegistrationModal(string tournamentName, string playerName, ComponentInteractionCreateEventArgs e)
@@ -967,90 +1021,90 @@ namespace _7D___Quistis.SlashCommands
             return matchesList;
         }
 
-        public async Task AddTournamentPoins(Participant p, int count)
+        public async Task AddTournamentPoins(Participant p, int count, string tournamentname)
         {
             if(count > 24)
             {
-                await ComputeScore25p(p);
+                await ComputeScore25p(p, tournamentname);
             }
             else if(count > 8)
             {
-                await ComputeScore24p(p);
+                await ComputeScore24p(p, tournamentname);
             }
             else
             {
-                await ComputeScore8p(p);
+                await ComputeScore8p(p, tournamentname);
             }
         }
 
-        public async Task ComputeScore8p(Participant p)
+        public async Task ComputeScore8p(Participant p, string tournamentname)
         {
             if(Int32.Parse(p.final_rank.ToString()) == 1)
             {
-                await DBEngine.ChangePlayerPoints(5, p.display_name);
+                await DBEngine.AddTournamentPoints(5, p.display_name, tournamentname);
             }
             else if(Int32.Parse(p.final_rank.ToString()) == 2)
             {
-                await DBEngine.ChangePlayerPoints(3, p.display_name);
+                await DBEngine.AddTournamentPoints(3, p.display_name, tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) == 3 || Int32.Parse(p.final_rank.ToString()) == 4 )
             {
-                await DBEngine.ChangePlayerPoints(2, p.display_name);
+                await DBEngine.AddTournamentPoints(2, p.display_name, tournamentname);
             }
             else
             {
-                await DBEngine.ChangePlayerPoints(1, p.display_name);
+                await DBEngine.AddTournamentPoints(1, p.display_name, tournamentname);
             }
         }
-        public async Task ComputeScore24p(Participant p)
+        public async Task ComputeScore24p(Participant p, string tournamentname)
         {
             if (Int32.Parse(p.final_rank.ToString()) == 1)
             {
-                await DBEngine.ChangePlayerPoints(7, p.username.ToString());
+                await DBEngine.AddTournamentPoints(7, p.username.ToString(), tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) == 2)
             {
-                await DBEngine.ChangePlayerPoints(5, p.username.ToString());
+                await DBEngine.AddTournamentPoints(5, p.username.ToString(), tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) == 3 || Int32.Parse(p.final_rank.ToString()) == 4)
             {
-                await DBEngine.ChangePlayerPoints(3, p.username.ToString());
+                await DBEngine.AddTournamentPoints(3, p.username.ToString(), tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) <= 8)
             {
-                await DBEngine.ChangePlayerPoints(2, p.username.ToString());
+                await DBEngine.AddTournamentPoints(2, p.username.ToString(), tournamentname);
             }
             else
             {
-                await DBEngine.ChangePlayerPoints(1, p.username.ToString());
+                await DBEngine.AddTournamentPoints(1, p.username.ToString(), tournamentname);
             }
         }
 
-        public async Task ComputeScore25p(Participant p)
+        public async Task ComputeScore25p(Participant p, string tournamentname)
         {
             if (Int32.Parse(p.final_rank.ToString()) == 1)
             {
-                await DBEngine.ChangePlayerPoints(10, p.username.ToString());
+                await DBEngine.AddTournamentPoints(10, p.username.ToString(), tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) == 2)
             {
-                await DBEngine.ChangePlayerPoints(7, p.username.ToString());
+                await DBEngine.AddTournamentPoints(7, p.username.ToString(), tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) == 3 || Int32.Parse(p.final_rank.ToString()) == 4)
             {
-                await DBEngine.ChangePlayerPoints(5, p.username.ToString());
+                await DBEngine.AddTournamentPoints(5, p.username.ToString(), tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) <= 8)
             {
-                await DBEngine.ChangePlayerPoints(3, p.username.ToString());
+                await DBEngine.AddTournamentPoints(3, p.username.ToString(), tournamentname);
             }
             else if (Int32.Parse(p.final_rank.ToString()) <= 16)
             {
-                await DBEngine.ChangePlayerPoints(2, p.username.ToString());
+                await DBEngine.AddTournamentPoints(2, p.username.ToString(), tournamentname);
             }
             else
             {
-                await DBEngine.ChangePlayerPoints(1, p.username.ToString());
+                await DBEngine.AddTournamentPoints(1, p.username.ToString(), tournamentname);
             }
         }
 

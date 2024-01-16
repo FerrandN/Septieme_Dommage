@@ -366,7 +366,30 @@ namespace _7D___Quistis.DataBase
             {
                 using (var conn = new NpgsqlConnection(await DBGetConnectionString()))
                 {
-                    string querry = $"update sddb.players set scores = scores + {points} where player_nickname = '{playerName}';";
+                    string querry = $"update sddb.players set bonus = bonus + {points} where player_nickname = '{playerName}';";
+                    await conn.OpenAsync();
+                    //send querry to DB
+                    using (var cmd = new NpgsqlCommand(querry, conn))
+                    {
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public static async Task AddTournamentPoints(int points, string playerName, string tournamentname)
+        {
+            try
+            {
+                int tournamentid = await GetLastTournamentId(tournamentname);
+                int playerid = await GetPlayerId(playerName);
+                using (var conn = new NpgsqlConnection(await DBGetConnectionString()))
+                {
+                    string querry = $"UPDATE sddb.registrations set players_points_won = {points} where sddb.registrations.player_id = {playerid} and tournament_id = {tournamentid};";
                     await conn.OpenAsync();
                     //send querry to DB
                     using (var cmd = new NpgsqlCommand(querry, conn))
