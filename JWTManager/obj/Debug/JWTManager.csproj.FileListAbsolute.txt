@@ -1,0 +1,72 @@
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\JWTManager.dll.config
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\JWTManager.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\JWTManager.pdb
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.Logging.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.Tokens.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Buffers.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Memory.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Numerics.Vectors.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Text.Encodings.Web.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Text.Json.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.ValueTuple.dll
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.Bcl.AsyncInterfaces.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.Abstractions.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.JsonWebTokens.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.Logging.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\Microsoft.IdentityModel.Tokens.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Buffers.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.IdentityModel.Tokens.Jwt.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Memory.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Numerics.Vectors.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Text.Encodings.Web.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Text.Json.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.Threading.Tasks.Extensions.xml
+C:\Users\nicol\source\repos\JWTManager\bin\Debug\System.ValueTuple.xml
+C:\Users\nicol\source\repos\JWTManager\obj\Debug\JWTManager.csproj.AssemblyReference.cache
+C:\Users\nicol\source\repos\JWTManager\obj\Debug\JWTManager.csproj.CoreCompileInputs.cache
+C:\Users\nicol\source\repos\JWTManager\obj\Debug\JWTManager.csproj.CopyComplete
+C:\Users\nicol\source\repos\JWTManager\obj\Debug\JWTManager.dll
+C:\Users\nicol\source\repos\JWTManager\obj\Debug\JWTManager.pdb
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\JWTManager.dll.config
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\JWTManager.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\JWTManager.pdb
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.Abstractions.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.Logging.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.Tokens.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Buffers.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.IdentityModel.Tokens.Jwt.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Memory.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Numerics.Vectors.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Text.Encodings.Web.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Text.Json.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Threading.Tasks.Extensions.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.ValueTuple.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.Bcl.AsyncInterfaces.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.Abstractions.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.JsonWebTokens.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.Logging.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\Microsoft.IdentityModel.Tokens.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Buffers.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.IdentityModel.Tokens.Jwt.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Memory.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Numerics.Vectors.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Text.Encodings.Web.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Text.Json.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.Threading.Tasks.Extensions.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\bin\Debug\System.ValueTuple.xml
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\obj\Debug\JWTManager.csproj.AssemblyReference.cache
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\obj\Debug\JWTManager.csproj.CoreCompileInputs.cache
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\obj\Debug\JWTManager.csproj.Up2Date
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\obj\Debug\JWTManager.dll
+D:\Travail\Site 7D\Septieme_Dommage\JWTManager\obj\Debug\JWTManager.pdb
